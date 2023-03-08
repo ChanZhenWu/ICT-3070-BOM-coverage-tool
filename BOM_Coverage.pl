@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.6>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.7>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -57,8 +57,10 @@ $summary-> activate();					#设置初始可见
 $format_item = $bom_coverage_report-> add_format(bold=>1, align=>'left', border=>1, size=>12, bg_color=>'cyan');
 $format_head = $bom_coverage_report-> add_format(bold=>1, align=>'vcenter', border=>1, size=>12, bg_color=>'lime');
 $format_data = $bom_coverage_report-> add_format(align=>'center', border=>1);
+$format_anno = $bom_coverage_report-> add_format(align=>'left', border=>1);
 $format_PCT  = $bom_coverage_report-> add_format(align=>'center', border=>1, num_format=> '10');
 $format_STP  = $bom_coverage_report-> add_format(color=>'red', align=>'center', border=>1, bg_color=>'yellow');
+$format_anno -> set_text_wrap();
 
 $row = 0; $col = 0;
 $tested-> write($row, $col, '<Device>', $format_head);
@@ -224,7 +226,7 @@ foreach $device (@bom_list)
           #or substr($lineTO,index($lineTO,$device) + length($device),1) eq "\%")
 				{
 					$foundTO = 1;
-					print "			Regular Test\n";   #, $lineTO,"\n";
+					print "			General Test\n";   #, $lineTO,"\n";
 					$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 				  #print $testname,"\n";
 					#print length($testname),"\n";
@@ -539,7 +541,7 @@ foreach $device (@bom_list)
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n";
@@ -878,7 +880,7 @@ foreach $device (@bom_list)
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
@@ -1217,7 +1219,7 @@ foreach $device (@bom_list)
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
@@ -1314,7 +1316,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -1413,7 +1415,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -1501,15 +1503,20 @@ foreach $device (@bom_list)
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder."; printf Nulltested "%-14s";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+				$UTline = "";
 				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or print Nulltested "!TestFile not found.\n";
 				#open(ALL, "<analog/1%$device");
 				while($line = <ALL>)
 					{
 					if (index($line,$device)>1){#4.4# print Nulltested $line; 
-						$untest-> write($rowU, 2, $line, $format_data);last;}
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n";
+						#$untest-> write($rowU, 2, $UTline, $format_anno); 
 						last;}
 					}
+					chomp($UTline);
+					$untest-> write($rowU, 2, $UTline, $format_anno);
 				$rowU++;
 				close ALL;
 				}
@@ -1533,20 +1540,26 @@ foreach $device (@bom_list)
 				$untest-> write($rowU, 0, $device1, $format_data);  ## Excel ##
 				$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
 				#print $device1,"\n";
+				$UTline = "";
 				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or print Nulltested "!TestFile not found.\n";
 				#open(ALL, "<analog/1%$device");
 				while($line = <ALL>)
 					{
 					#print $line,"\n";
 					if (index($line,$device1)>1){#4.4# print Nulltested $line;
-						$untest-> write($rowU, 2, $line, $format_data); last;}
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$UTline = $line . $UTline;}
 					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
-						$untest-> write($rowU, 2, $line, $format_data); last;}
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$UTline = $line . $UTline;}
 					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
-						$untest-> write($rowU, 2, $line, $format_data); last;}
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n"; 
 						last;}
 					}
+					chomp($UTline);
+					$untest-> write($rowU, 2, $UTline, $format_anno);
 				$rowU++;
 				close ALL;
 				}
@@ -1633,11 +1646,12 @@ foreach $device (@bom_list)
 										$lineTF =~ s/^ +//;                               	#clear head of line spacing
 										#print $lineTF;
 										if (substr($lineTF,0,6) eq "family")
-										{$family = $lineTF. ",  ". $family;}
+										{$family = $lineTF . $family;}
   										#{$power-> write($rowP, 2, $lineTF, $format_data);}  	## Excel ##
   									}
   									close SourceFile;
-  									$power-> write($rowP, 2, $family, $format_data);
+  									chomp($family);
+  									$power-> write($rowP, 2, $family, $format_anno);
 									$rowP++;
   								}
 							if (substr($lineTP,$StartBit_TP,$StopBit_TP) eq $testname	#matching skipped test in TP
@@ -1651,7 +1665,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -1680,7 +1694,7 @@ foreach $device (@bom_list)
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.              !Digital Test.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
-					$untest-> write($rowU, 2, "Digital Test.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 2, "Digital Test.", $format_anno);  ## Excel ##
 					$rowU++;
 				}
 			################ testable analog powered test ######################################################################################
@@ -1768,7 +1782,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -1797,7 +1811,7 @@ foreach $device (@bom_list)
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.              !Analog Powered Test.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
-					$untest-> write($rowU, 2, "Analog Powered Test.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 2, "Analog Powered Test.", $format_anno);  ## Excel ##
 					$rowU++;
 				}
 			################ multi-test(%)powered untestable device ####################################################################################
@@ -1903,7 +1917,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -2017,11 +2031,12 @@ foreach $device (@bom_list)
 										$lineTF =~ s/^ +//;                               	#clear head of line spacing
 										#print $lineTF;
 										if (substr($lineTF,0,6) eq "family")
-										{$family = $lineTF. ",  ". $family;}
+										{$family = $lineTF . $family;}
   										#{$power-> write($rowP, 2, $lineTF, $format_data);}  	## Excel ##
   									}
   									close SourceFile;
-  									$power-> write($rowP, 2, $family, $format_data);
+  									chomp($family);
+  									$power-> write($rowP, 2, $family, $format_anno);
 									$rowP++;
   								}
 							if (substr($lineTP,$StartBit_TP,$StopBit_TP) eq $testname	#matching skipped test in TP
@@ -2035,7 +2050,7 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
@@ -2064,7 +2079,7 @@ foreach $device (@bom_list)
 					#4.4# printf Nulltested "%-30s", substr($lineTO,index($lineTO,$device),index($lineTO,"\;")-index($lineTO,$device)-1); print Nulltested "set NullTest in TestOrder.              !Bscan Test.\n";
 					$untest-> write($rowU, 0, substr($lineTO,index($lineTO,$device),index($lineTO,"\;")-index($lineTO,$device)-1), $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
-					$untest-> write($rowU, 2, "Bscan Test.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 2, "Bscan Test.", $format_anno);  ## Excel ##
 					$rowU++;
 				}
       ################ reservation #######################################################################################################
@@ -2074,7 +2089,7 @@ foreach $device (@bom_list)
       		#4.4# print Nulltested "NO test item found in TestOrder,    !Check TJ/SP testing.\n";
 			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 			$untest-> write($rowU, 1, "NO test item found in TestOrder.", $format_data);  ## Excel ##
-			$untest-> write($rowU, 2, "Check TJ/SP testing.", $format_data);  ## Excel ##
+			$untest-> write($rowU, 2, "Check TJ/SP testing.", $format_anno);  ## Excel ##
 			$rowU++;
       		goto Next_Dev;
       		}
