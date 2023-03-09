@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.7>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.8>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -324,7 +324,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -361,7 +361,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -398,7 +398,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -426,7 +426,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 4, $LoLimit, $format_data);  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -463,7 +463,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -477,7 +477,7 @@ foreach $device (@bom_list)
 											$parameter = substr($lineTF,index($lineTF,"\ ") + 1,length($lineTF));
 											$parameter =~ s/\s//g;
 											undef @array;
-											$OP == 0; if ($lineTF =~ "op") {$OP = 1;}
+											$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
 												while ($parameter =~ m/\,/g)
 													{
 														$paramt = substr($parameter,$len,pos($parameter) - $len - 1);
@@ -493,7 +493,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $Nominal, $format_STP);
 													 $tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -518,7 +518,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 3, $Nominal, $format_data);  	## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  				#TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);    ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -663,7 +663,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -700,7 +700,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -737,7 +737,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -765,7 +765,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 4, $LoLimit, $format_data);  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -802,7 +802,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -816,7 +816,7 @@ foreach $device (@bom_list)
 											$parameter = substr($lineTF,index($lineTF,"\ ") + 1,length($lineTF));
 											$parameter =~ s/\s//g;
 											undef @array;
-											$OP == 0; if ($lineTF =~ "op") {$OP = 1;}
+											$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
 												while ($parameter =~ m/\,/g)
 													{
 														$paramt = substr($parameter,$len,pos($parameter) - $len - 1);
@@ -832,7 +832,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $Nominal, $format_STP);
 													 $tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -857,7 +857,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 3, $Nominal, $format_data);  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1002,7 +1002,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1039,7 +1039,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1076,7 +1076,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1104,7 +1104,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 4, $LoLimit, $format_data);  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1141,7 +1141,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $LoLimit, $format_STP);}	  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1155,7 +1155,7 @@ foreach $device (@bom_list)
 											$parameter = substr($lineTF,index($lineTF,"\ ") + 1,length($lineTF));
 											$parameter =~ s/\s//g;
 											undef @array;
-											$OP == 0; if ($lineTF =~ "op") {$OP = 1;}
+											$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
 												while ($parameter =~ m/\,/g)
 													{
 														$paramt = substr($parameter,$len,pos($parameter) - $len - 1);
@@ -1171,7 +1171,7 @@ foreach $device (@bom_list)
 													{$tested-> write($rowT, 4, $Nominal, $format_STP);
 													 $tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
@@ -1196,7 +1196,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 3, $Nominal, $format_data);  ## Excel ##
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
-													print Tested "\n";
+													#4.8# print Tested "\n";
 													$rowT++;
 													last;
 										}
