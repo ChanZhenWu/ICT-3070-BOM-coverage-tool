@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.8>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.9>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -1504,12 +1504,13 @@ foreach $device (@bom_list)
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
 				$UTline = "";
-				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or print Nulltested "!TestFile not found.\n";
+				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
 				#open(ALL, "<analog/1%$device");
 				while($line = <ALL>)
 					{
 					if (index($line,$device)>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,1);
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n";
 						#$untest-> write($rowU, 2, $UTline, $format_anno); 
@@ -1541,19 +1542,22 @@ foreach $device (@bom_list)
 				$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
 				#print $device1,"\n";
 				$UTline = "";
-				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or print Nulltested "!TestFile not found.\n";
+				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
 				#open(ALL, "<analog/1%$device");
 				while($line = <ALL>)
 					{
 					#print $line,"\n";
 					if (index($line,$device1)>1){#4.4# print Nulltested $line;
 						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,1);
 						$UTline = $line . $UTline;}
 					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,1);
 						$UTline = $line . $UTline;}
 					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,1);
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n"; 
 						last;}
@@ -1811,8 +1815,24 @@ foreach $device (@bom_list)
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.              !Analog Powered Test.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
-					$untest-> write($rowU, 2, "Analog Powered Test.", $format_anno);  ## Excel ##
+					#4.9# $untest-> write($rowU, 2, "Analog Powered Test.", $format_anno);  ## Excel ##
+				$UTline = "";
+				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
+				#open(ALL, "<analog/1%$device");
+				while($line = <ALL>)
+					{
+					if (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,6);
+						$UTline = $line . $UTline;}
+					elsif (eof){#4.4# print Nulltested "\n";
+						#$untest-> write($rowU, 2, $UTline, $format_anno); 
+						last;}
+					}
+					chomp($UTline);
+					$untest-> write($rowU, 2, $UTline, $format_anno);
 					$rowU++;
+					close ALL;
 				}
 			################ multi-test(%)powered untestable device ####################################################################################
 			elsif(substr($lineTO,index($lineTO,$device) + length($device),1) eq "\%"
@@ -1827,10 +1847,37 @@ foreach $device (@bom_list)
 				{
 					$foundTO = 1;
 					print "			Multi_UnTest(%)PWD  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
-					#4.4# printf Nulltested "%-30s", substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1); print Nulltested "set NullTest in TestOrder.\n";
-					$untest-> write($rowU, 0, substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1), $format_data);  ## Excel ##
+				$device1 = "";
+				$device1 = substr($lineTO, index($lineTO,"\"")+ 1, rindex($lineTO,"\"")- index($lineTO,"\"")- 1);
+				#4.4# printf Nulltested "%-30s", $device1; print Nulltested "set NullTest in TestOrder."; printf Nulltested "%-14s";
+				$untest-> write($rowU, 0, $device1, $format_data);  ## Excel ##
 					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+				#print $device1,"\n";
+				$UTline = "";
+				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
+				#open(ALL, "<analog/1%$device");
+				while($line = <ALL>)
+					{
+					#print $line,"\n";
+					if (index($line,$device1)>1){#4.4# print Nulltested $line;
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,6);
+						$UTline = $line . $UTline;}
+					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,6);
+						$UTline = $line . $UTline;}
+					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
+						#$untest-> write($rowU, 2, $line, $format_anno);
+						$line = substr($line,6);
+						$UTline = $line . $UTline;}
+					elsif (eof){#4.4# print Nulltested "\n"; 
+						last;}
+					}
+					chomp($UTline);
+					$untest-> write($rowU, 2, $UTline, $format_anno);
 					$rowU++;
+				close ALL;
 				}
 			################ testable mixed device ##########################################################################################
 			elsif(substr($lineTO,$StartBit_TO,$StopBit_TO) eq $device
