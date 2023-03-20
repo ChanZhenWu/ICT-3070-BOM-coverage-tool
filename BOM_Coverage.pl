@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.9>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.91>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -37,6 +37,7 @@ my $tested = $bom_coverage_report-> add_worksheet('Tested');
 my $untest = $bom_coverage_report-> add_worksheet('Untest');
 my $limited = $bom_coverage_report-> add_worksheet('LimitTest');
 my $power = $bom_coverage_report-> add_worksheet('PowerTest');
+#my $ICpin = $bom_coverage_report-> add_worksheet('IC pin coverage');
 my $short_thres = $bom_coverage_report-> add_worksheet('Shorts_Thres');
 
 $tested-> freeze_panes(1,1);			#冻结行、列
@@ -138,6 +139,21 @@ $row = 4; $col = 2;
 $summary-> write_formula($row, $col, "=(B5/(B2+B3+B4+B5))", $format_PCT);  #输出Percentage
 $row = 5; $col = 2;
 $summary-> write_formula($row, $col, "=(B6/COUNTA(Shorts_Thres!A2:A9999))", $format_PCT);  #输出Percentage
+
+$tested-> write("H2", 'Type', $format_item);
+$tested-> write("H3", 'Count', $format_item);
+$tested-> write("I2", 'Resistor', $format_head);
+$tested-> write("J2", 'Capacitor', $format_head);
+$tested-> write("K2", 'Inductor', $format_head);
+$tested-> write("L2", 'Jumper', $format_head);
+$tested-> write("M2", 'Diode', $format_head);
+$tested-> write("N2", 'Zener', $format_head);
+$tested-> write_formula("I3",, '=COUNTIF(B2:B99999,"Resistor")', $format_data);
+$tested-> write_formula("J3", '=COUNTIF(B2:B99999,"Capacitor")', $format_data);
+$tested-> write_formula("K3", '=COUNTIF(B2:B99999,"Inductor")', $format_data);
+$tested-> write_formula("L3", '=COUNTIF(B2:B99999,"Jumper")', $format_data);
+$tested-> write_formula("M3", '=COUNTIF(B2:B99999,"Diode")', $format_data);
+$tested-> write_formula("N3", '=COUNTIF(B2:B99999,"Zener")', $format_data);
 
 my $chart = $bom_coverage_report-> add_chart( type => 'pie', embedded => 1 );
 $chart-> add_series(
@@ -1444,7 +1460,7 @@ foreach $device (@bom_list)
 					print "			Parallel_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Limited "%-30s", $device; print Limited substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")),"\n";
 					$limited-> write($rowL, 0, $device, $format_data);  ## Excel ##
-					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")), $format_data);  ## Excel ##
+					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!")+1,length($lineTO)-index($lineTO,"\!")-1), $format_data);  ## Excel ##
 					$rowL++;
 				}
 			################ paralleled multi-test (_)test name ##################################################################################
@@ -1463,7 +1479,7 @@ foreach $device (@bom_list)
 					print "			Parallel_Test(_)  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Limited "%-30s", substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1); print Limited substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")),"\n";
 					$limited-> write($rowL, 0, substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1), $format_data);  ## Excel ##
-					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")), $format_data);  ## Excel ##
+					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!")+1,length($lineTO)-index($lineTO,"\!")-1), $format_data);  ## Excel ##
 					$rowL++;
 				}
 			################ paralleled multi-test (%)test name ##################################################################################
@@ -1483,7 +1499,7 @@ foreach $device (@bom_list)
 					print "			Parallel_Test(%)  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Limited "%-30s", substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1); print Limited substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")),"\n";
 					$limited-> write($rowL, 0, substr($lineTO,index($lineTO,$device), index($lineTO,"\;")- index($lineTO,$device)- 1), $format_data);  ## Excel ##
-					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!"),length($lineTO)-index($lineTO,"\!")), $format_data);  ## Excel ##
+					$limited-> write($rowL, 1, substr($lineTO,index($lineTO,"\!")+1,length($lineTO)-index($lineTO,"\!")-1), $format_data);  ## Excel ##
 					$rowL++;
 				}
 			################ untestable devices ##############################################################################################
