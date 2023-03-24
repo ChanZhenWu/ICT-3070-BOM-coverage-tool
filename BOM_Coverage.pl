@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.91>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.9.2>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -2173,7 +2173,12 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 	{
 		chomp $nodes;
 		$nodes =~ s/^ +//;	   #clear head of line spacing
-		if ($nodes =~ "threshold") {$thres = substr($nodes, index($nodes,"threshold")+10)}
+		if ($nodes =~ "threshold") 
+			{
+				$thres = substr($nodes, index($nodes,"threshold")+10);
+				if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
+				$thres =~ s/\s//g;                     #clear all spacing
+			}
 		if ($nodes =~ "nodes")
 		{
 			if(substr($nodes,0,1) eq "!"){
