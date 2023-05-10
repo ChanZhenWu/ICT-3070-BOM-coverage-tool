@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.9.2>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.9.3>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -1518,7 +1518,7 @@ foreach $device (@bom_list)
 					print "			NULL_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder."; printf Nulltested "%-14s";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 				$UTline = "";
 				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
 				#open(ALL, "<analog/1%$device");
@@ -1555,7 +1555,7 @@ foreach $device (@bom_list)
 				$device1 = substr($lineTO, index($lineTO,"\"")+ 1, rindex($lineTO,"\"")- index($lineTO,"\"")- 1);
 				#4.4# printf Nulltested "%-30s", $device1; print Nulltested "set NullTest in TestOrder."; printf Nulltested "%-14s";
 				$untest-> write($rowU, 0, $device1, $format_data);  ## Excel ##
-				$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+				$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 				#print $device1,"\n";
 				$UTline = "";
 				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
@@ -1713,7 +1713,7 @@ foreach $device (@bom_list)
 					print "			Digital_UnTest  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.              !Digital Test.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 					$untest-> write($rowU, 2, "Digital Test.", $format_anno);  ## Excel ##
 					$rowU++;
 				}
@@ -1830,7 +1830,7 @@ foreach $device (@bom_list)
 					print "			ANA_PWD_UnTest  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.              !Analog Powered Test.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 					#4.9# $untest-> write($rowU, 2, "Analog Powered Test.", $format_anno);  ## Excel ##
 				$UTline = "";
 				open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
@@ -1867,7 +1867,7 @@ foreach $device (@bom_list)
 				$device1 = substr($lineTO, index($lineTO,"\"")+ 1, rindex($lineTO,"\"")- index($lineTO,"\"")- 1);
 				#4.4# printf Nulltested "%-30s", $device1; print Nulltested "set NullTest in TestOrder."; printf Nulltested "%-14s";
 				$untest-> write($rowU, 0, $device1, $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 				#print $device1,"\n";
 				$UTline = "";
 				open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
@@ -2008,7 +2008,7 @@ foreach $device (@bom_list)
 					print "			Mixed_UnTest  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Nulltested "%-30s", $device; print Nulltested "set NullTest in TestOrder.\n";
 					$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 					$rowU++;
 				}
 			################ testable Bscan device #######################################################################################
@@ -2141,7 +2141,7 @@ foreach $device (@bom_list)
 					print "			Bscan_UnTest  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# printf Nulltested "%-30s", substr($lineTO,index($lineTO,$device),index($lineTO,"\;")-index($lineTO,$device)-1); print Nulltested "set NullTest in TestOrder.              !Bscan Test.\n";
 					$untest-> write($rowU, 0, substr($lineTO,index($lineTO,$device),index($lineTO,"\;")-index($lineTO,$device)-1), $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "set NullTest in TestOrder.", $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
 					$untest-> write($rowU, 2, "Bscan Test.", $format_anno);  ## Excel ##
 					$rowU++;
 				}
