@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.9.3>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.9.4>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -342,7 +342,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
 										{
@@ -379,7 +379,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
 										{
@@ -416,7 +416,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
 										{
@@ -444,7 +444,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
 										{
@@ -481,7 +481,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
 										{
@@ -511,7 +511,7 @@ foreach $device (@bom_list)
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
 										{
@@ -536,7 +536,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);    ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (eof)					  														####no parameter######
 										{
@@ -560,7 +560,7 @@ foreach $device (@bom_list)
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
 								}
-							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n";
+							elsif (eof){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n";
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
 							$rowU++;
@@ -681,7 +681,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,9) eq "capacitor")				####matching capacitor########
 										{
@@ -718,7 +718,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,8) eq "inductor")					####matching inductor########
 										{
@@ -755,7 +755,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "diode")						####matching diode######
 										{
@@ -783,7 +783,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "zener")						####matching zener##
 										{
@@ -820,7 +820,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
 										{
@@ -850,7 +850,7 @@ foreach $device (@bom_list)
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
 										{
@@ -875,7 +875,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (eof)					  														####no parameter######
 										{
@@ -1020,7 +1020,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,9) eq "capacitor")				####matching capacitor########
 										{
@@ -1057,7 +1057,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,8) eq "inductor")				####matching inductor########
 										{
@@ -1094,7 +1094,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "diode")					####matching diode######
 										{
@@ -1122,7 +1122,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "zener")					####matching zener##
 										{
@@ -1159,7 +1159,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,6) eq "jumper")					####matching jumper########
 										{
@@ -1189,7 +1189,7 @@ foreach $device (@bom_list)
 													#4.4# printf Tested "%-30s", $commentTP;  #TP comments
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,4) eq "fuse")					####matching fuse########
 										{
@@ -1214,7 +1214,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													last;
+													goto Next_Dev;
 										}
 										elsif (eof)					  						####no parameter######
 										{
