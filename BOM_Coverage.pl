@@ -43,6 +43,7 @@ my $short_thres = $bom_coverage_report-> add_worksheet('Shorts_Thres');
 $tested-> freeze_panes(1,1);			#冻结行、列
 $untest-> freeze_panes(1,0);			#冻结行、列
 $limited-> freeze_panes(1,0);			#冻结行、列
+$power-> freeze_panes(1,0);				#冻结行、列
 $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
@@ -1327,7 +1328,7 @@ foreach $device (@bom_list)
 								if (index($lineTP,"on boards")> -1)
 									{
 									$testfile = "analog/1%".$testname;
-									}	
+									}
 									#print $testfile,"\n";
 									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
 									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
