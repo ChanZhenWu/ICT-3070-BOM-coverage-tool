@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.9.5>\n";
+print "  Bom Coverage ckecking tool for 3070 <v4.9.9>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -10,21 +10,24 @@ print "\n";
 
 #########################################################################################
 #print "  Checking In: ";
+use Term::ReadKey;
 
- system "stty -echo";
+# system "stty -echo";
+ ReadMode('noecho'); # Disable echoing of characters
  print "  Password: ";
  chomp($Ccode = <STDIN>);
  print "\n";
- system "stty echo";
- 
+# system "stty echo";
+ ReadMode('restore'); # Restore terminal mode
+
    if ($Ccode ne "\@testpro")
    #if ($Ccode ne "TestPro")
     	{
-    		print "  >>> password Wrong!\n"; goto END_Prog;
+    		print "  >>> Wrong password!\n"; goto END_Prog;
     	}
    else
    	{
-    		print "  >>> password Correct.\n\n";
+    		print "  >>> Correct password.\n\n";
    	}
 
 
@@ -48,9 +51,10 @@ $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
 $tested-> set_column(0,5,20);			#设置列宽
-$untest-> set_column(0,2,30);			#设置列宽
-$limited-> set_column(0,1,30);			#设置列宽
-$power-> set_column(0,2,30);			#设置列宽
+$untest-> set_column(1,1,40);			#设置列宽
+$limited-> set_column(1,1,30);			#设置列宽
+$power-> set_column(1,3,30);			#设置列宽
+$power-> set_column(4,10,15);			#设置列宽
 $short_thres-> set_column(0,1,30);		#设置列宽
 
 $summary-> activate();					#设置初始可见
@@ -58,11 +62,16 @@ $summary-> activate();					#设置初始可见
 #新建一个格式
 $format_item = $bom_coverage_report-> add_format(bold=>1, align=>'left', border=>1, size=>12, bg_color=>'cyan');
 $format_head = $bom_coverage_report-> add_format(bold=>1, align=>'vcenter', border=>1, size=>12, bg_color=>'lime');
-$format_data = $bom_coverage_report-> add_format(align=>'center', border=>1);
-$format_anno = $bom_coverage_report-> add_format(align=>'left', border=>1);
+$format_data = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1);
+$format_GND  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'gray');
+$format_NC   = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'silver');
+$format_VCC  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'orange');
+$format_togg = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'green', text_wrap=>1);
+$format_anno = $bom_coverage_report-> add_format(align=>'left', valign=>'vcenter', border=>1, text_wrap=>1);
 $format_PCT  = $bom_coverage_report-> add_format(align=>'center', border=>1, num_format=> '10');
 $format_STP  = $bom_coverage_report-> add_format(color=>'red', align=>'center', border=>1, bg_color=>'yellow');
-$format_anno -> set_text_wrap();
+$format_hylk = $bom_coverage_report-> add_format(color=>'blue', align=>'center', valign=>'vcenter', border=>1, underline=>1);
+$format_FPY  = $bom_coverage_report-> add_format(align=>'center', border=>1, num_format=> '10');
 
 $row = 0; $col = 0;
 $tested-> write($row, $col, '<Device>', $format_head);
@@ -90,11 +99,27 @@ $row = 0; $col = 1;
 $limited-> write($row, $col, '<Comments>', $format_head);
 
 $row = 0; $col = 0;
-$power-> write($row, $col, '<TestOrder>', $format_head);
+$power-> write($row, $col, '<Device>', $format_head);
 $row = 0; $col = 1;
-$power-> write($row, $col, '<TestPlan>', $format_head);
+$power-> write($row, $col, '<TestOrder>', $format_head);
 $row = 0; $col = 2;
+$power-> write($row, $col, '<TestPlan>', $format_head);
+$row = 0; $col = 3;
 $power-> write($row, $col, '<Family>', $format_head);
+$row = 0; $col = 4;
+$power-> write($row, $col, '<Total Pin>', $format_item);
+$row = 0; $col = 5;
+$power-> write($row, $col, '<Power Pin>', $format_VCC);
+$row = 0; $col = 6;
+$power-> write($row, $col, '<GND Pin>', $format_GND);
+$row = 0; $col = 7;
+$power-> write($row, $col, '<Toggle Test Pin>', $format_togg);
+$row = 0; $col = 8;
+$power-> write($row, $col, '<NC Pin>', $format_NC);
+$row = 0; $col = 9;
+$power-> write($row, $col, '<Untest Pin>', $format_data);
+$row = 0; $col = 10;
+$power-> write($row, $col, '<Pin Coverage>', $format_head);
 
 $row = 0; $col = 0;
 $short_thres-> write($row, $col, 'Nodes', $format_head);
@@ -149,12 +174,20 @@ $tested-> write("K2", 'Inductor', $format_head);
 $tested-> write("L2", 'Jumper', $format_head);
 $tested-> write("M2", 'Diode', $format_head);
 $tested-> write("N2", 'Zener', $format_head);
-$tested-> write_formula("I3",, '=COUNTIF(B2:B99999,"Resistor")', $format_data);
+$tested-> write_formula("I3", '=COUNTIF(B2:B99999,"Resistor")', $format_data);
 $tested-> write_formula("J3", '=COUNTIF(B2:B99999,"Capacitor")', $format_data);
 $tested-> write_formula("K3", '=COUNTIF(B2:B99999,"Inductor")', $format_data);
 $tested-> write_formula("L3", '=COUNTIF(B2:B99999,"Jumper")', $format_data);
 $tested-> write_formula("M3", '=COUNTIF(B2:B99999,"Diode")', $format_data);
 $tested-> write_formula("N3", '=COUNTIF(B2:B99999,"Zener")', $format_data);
+
+$power-> conditional_formatting('H2:H9999',
+    {
+    	type     => 'cell',
+     	criteria => 'greater than',
+     	value    => 0,
+     	format   => $format_togg,
+    });
 
 my $chart = $bom_coverage_report-> add_chart( type => 'pie', embedded => 1 );
 $chart-> add_series(
@@ -163,13 +196,14 @@ $chart-> add_series(
     values     => '=Summary!$B$2:$B$5',
     data_labels => {value => 1},
 	);
+$chart-> set_style( 10 );
 $summary-> insert_chart('A9', $chart, 10, 0, 1.0, 1.6);
 
 $rowT = 1;
 $rowU = 1;
 $rowL = 1;
 $rowP = 1;
-
+$length_anno = 8;
 
 print "  please specify BOM list file: ";
    $bom=<STDIN>;
@@ -192,9 +226,17 @@ print "[DONE]\n";
 
 foreach $device (@bom_list)
 {
+	$Total_Pin = 0;
+	$Power_Pin = 0;
+	$GND_Pin = 0;
+	$Toggle_Pin = 0;
+	$NC_Pin = 0;
+	$Untest_Pin = 0;
+	#-------------------------------------------------------------------------------------
+	$worksheet = 0;
 	$foundTO = 0;
 	$foundTP = 0;
-	$device =~ s/\s//g;                     #clear all spacing
+	$device =~ s/(^\s+|\s+$)//g;                     #clear all spacing
 	$device = lc($device);
 
 	$len_device = length($device);
@@ -291,15 +333,16 @@ foreach $device (@bom_list)
 									{
 									$testfile = substr($lineTP,index($lineTP,"\"") + 1, $device_len);
 									}
-								if (index($lineTP,"on boards")> -1)
-									{
-									$testfile = "analog/1%".$testname;
-									}
 								if ($lineTP =~ '\"'.$testname.'"' and $lineTP =~ "test"
 									and substr($lineTP,0,1) ne "\!")
 									{
 									$testfile = "analog/".$testname;
-										}	
+										}
+								if (index($lineTP,"on boards")> -1)
+									{
+									$testfile = "analog/1%".$testname;
+									}
+	
 									#print $testfile,"\n";
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -385,7 +428,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													goto Next_Dev;
+													last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
 										{
@@ -450,7 +493,7 @@ foreach $device (@bom_list)
 													$tested-> write($rowT, 5, $commentTP, $format_data);  ## Excel ##
 													#4.8# print Tested "\n";
 													$rowT++;
-													goto Next_Dev;
+													last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
 										{
@@ -567,9 +610,10 @@ foreach $device (@bom_list)
 									$rowU++;
 									goto Next_Dev;
 								}
-							elsif (eof){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n";
+							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n";
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
 							$rowU++;
 							goto Next_Dev;}
 							}
@@ -636,15 +680,16 @@ foreach $device (@bom_list)
 									{
 									$testfile = substr($lineTP,index($lineTP,"\"") + 1, $device_len);
 									}
-								if (index($lineTP,"on boards")> -1)
-									{
-									$testfile = "analog/1%".$testname;
-									}
 								if ($lineTP =~ '\"'.$testname.'"' and $lineTP =~ "test"
 									and substr($lineTP,0,1) ne "\!")
 									{
 									$testfile = "analog/".$testname;
-									}	
+									}
+								if (index($lineTP,"on boards")> -1)
+									{
+									$testfile = "analog/1%".$testname;
+									}
+
 								#print $testfile,"\n";
 									  if ($testfile eq $testfile_last){last;}																	#ignore duplicated test name
 									  $commentTP = "";
@@ -914,6 +959,7 @@ foreach $device (@bom_list)
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
 							$rowU++;
 							goto Next_Dev;}
 							}
@@ -980,15 +1026,16 @@ foreach $device (@bom_list)
 									{
 									$testfile = substr($lineTP,index($lineTP,"\"") + 1, $device_len);
 									}
-								if (index($lineTP,"on boards")> -1)
-									{
-									$testfile = "analog/1%".$testname;
-									}	
 								if ($lineTP =~ '\"'.$testname.'"' and $lineTP =~ "test"
 									and substr($lineTP,0,1) ne "\!")
 									{
 									$testfile = "analog/".$testname;
 										}
+								if (index($lineTP,"on boards")> -1)
+									{
+									$testfile = "analog/1%".$testname;
+									}	
+
 								#print $testfile,"\n";
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1258,6 +1305,7 @@ foreach $device (@bom_list)
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
 							$rowU++;
 							goto Next_Dev;}
 							}
@@ -1278,7 +1326,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			Multi_Test(_)PWD  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1330,8 +1378,11 @@ foreach $device (@bom_list)
 									$testfile = "analog/1%".$testname;
 									}
 									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
+									$power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);  ## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1346,7 +1397,7 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -1354,13 +1405,13 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ multi-test(%)powered testable devices #############################################################################
 			elsif(substr($lineTO,index($lineTO,$device) + length($device),1) eq "\%"
@@ -1377,7 +1428,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			Multi_Test(%)PWD  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1429,8 +1480,11 @@ foreach $device (@bom_list)
 									$testfile = "analog/1%".$testname;
 									}	
 									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
+									$power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);  ## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1445,7 +1499,7 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -1453,13 +1507,13 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ paralleled devices ##############################################################################################
 			elsif(substr($lineTO,$StartBit_TO,$StopBit_TO) eq $device
@@ -1544,13 +1598,15 @@ foreach $device (@bom_list)
 					if (index($line,$device)>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n";
 						#$untest-> write($rowU, 2, $UTline, $format_anno); 
 						last;}
 					}
-					chomp($UTline);
+					$UTline =~ s/(^\s+|\s+$)//g;
 					$untest-> write($rowU, 2, $UTline, $format_anno);
+					$untest-> set_column(2, 2, $length_anno);
 				$rowU++;
 				close ALL;
 				}
@@ -1583,20 +1639,24 @@ foreach $device (@bom_list)
 					if (index($line,$device1)>1){#4.4# print Nulltested $line;
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n"; 
 						last;}
 					}
 					chomp($UTline);
 					$untest-> write($rowU, 2, $UTline, $format_anno);
+					$untest-> set_column(2, 2, $length_anno);
 				$rowU++;
 				close ALL;
 				}
@@ -1614,7 +1674,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			Digital_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1661,19 +1721,175 @@ foreach $device (@bom_list)
 									{
 									$testfile = substr($lineTP,index($lineTP,"\"") + 1, $device_len + 1);
 									}
-								if (index($lineTP,"on boards")> -1)
-									{
-									$testfile = "digital/1%".$testname;
-									}
 								if ($lineTP =~ '\"'.$testname.'"' and $lineTP =~ "test"
 									and substr($lineTP,0,1) ne "\!")
 									{
 									$testfile = "digital/".$testname;
 									}
+								if (index($lineTP,"on boards")> -1)
+									{
+									$testfile = "digital/1%".$testname;
+									}
+
 									#print $lineTP,"\n";
-									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									#print $testname,"\n";
+									$power-> write($rowP, 1, $lineTO, $format_data);  			## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);			## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
+									###### hyperlink #####################################
+									$power-> write_url($rowP, 0, 'internal:'.$testname.'!A1');  ## hyperlink
+									
+									if ($worksheet == 0){
+									$worksheet = 1;
+									my $IC = $bom_coverage_report-> add_worksheet($testname);   ## hyperlink
+									$IC-> write_url('A1', 'internal:PowerTest!A1');  			## hyperlink
+									$IC->conditional_formatting('A1:GR999',
+									    {
+									    	type     => 'text',
+									     	criteria => 'containing',
+									     	value    => 'Toggle_Test',
+									     	format   => $format_togg,
+									    });
+									
+									$length_DigPin = 8;
+									open (Boards, "< board");
+									while($lineDig = <Boards>)								
+									{
+										$lineDig =~ s/(^\s+|\s+$)//g;
+										#print $lineDig;
+										if (substr($lineDig,0,7) eq "DEVICES")
+											{
+											while($lineDig = <Boards>)								
+												{
+												$lineDig =~ s/(^\s+|\s+$)//g;
+												$testname1 = uc($testname);
+												#print $testname1."\n";
+												#print $lineDig."\n";
+												if ($lineDig eq $testname1)
+													{while($lineDig = <Boards>) 
+														{#print $lineDig;
+														$Total_Pin++;
+														@DigPin = split('\.',$lineDig);
+														$DigPin[0] =~ s/(^\s+|\s+$)//g;
+														$DigPin[1] =~ s/(^\s+|\s+$)//g;
+														#print $DigPin[0]."\n";
+														if ($DigPin[1] =~ /(GND|GROUND)/){
+															if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_GND); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+															if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_GND);
+															($pos) = $DigPin[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$DigPos = ord($pos)%64;}
+															if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $DigPos."\n";
+															if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+															}
+															$GND_Pin++;
+														}
+														elsif ($DigPin[1] =~ /(VCC|VDD|0V6|0V8|0V9|1V1|1V2|1V5|1V8|1P8V|V_1P8|2V5|2P5V|V_2P5|3V3|3P3V|V_3P3|3V8|5V0|12V|20V)/){
+															if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_VCC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+															if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_VCC);
+															($pos) = $DigPin[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$DigPos = ord($pos)%64;}
+															if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $DigPos."\n";
+															if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+															}
+															$Power_Pin++;
+														}
+														elsif ($DigPin[1] =~ /(^NC_|_NC$|NONE)/){
+															if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_NC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+															if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_NC);
+															($pos) = $DigPin[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$DigPos = ord($pos)%64;}
+															if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $DigPos."\n";
+															if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+															}
+															$NC_Pin++;
+														}
+														else{
+														my $BDG_File = "bdg_data/dig_inc_ver_fau.dat";
+														if(-e $BDG_File){
+															open (BDGFile, "< bdg_data/dig_inc_ver_fau.dat");
+															while($BDGline = <BDGFile>)
+															{
+															$BDGline =~ s/(^\s+|\s+$)//g;
+															if($BDGline =~ $device and $BDGline =~ substr($DigPin[1], 0, length($DigPin[1])-1))
+																{
+																#print $BDGline."\n";
+																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n  Toggle_Test", $format_togg); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n  Toggle_Test", $format_togg);
+																	($pos) = $DigPin[0] =~ /^\D+/g;
+																	#print $pos."\n";
+																	#print substr($pos,0,1)."\n";
+																	#print length($pos)."\n";
+																	if (length($pos) == 1){$DigPos = ord($pos)%64;}
+																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+																	#print $DigPos."\n";
+																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+																	}
+																last;
+																}
+															elsif (eof){
+																#print $BDGline."\n";
+																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_data);
+																	($pos) = $DigPin[0] =~ /^\D+/g;
+																	#print $pos."\n";
+																	#print substr($pos,0,1)."\n";
+																	#print length($pos)."\n";
+																	if (length($pos) == 1){$DigPos = ord($pos)%64;}
+																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+																	#print $DigPos."\n";
+																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+																	}
+																last;
+																}
+															}
+															close BDGfile;}
+															else{
+																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_data);
+																	($pos) = $DigPin[0] =~ /^\D+/g;
+																	#print $pos."\n";
+																	#print substr($pos,0,1)."\n";
+																	#print length($pos)."\n";
+																	if (length($pos) == 1){$DigPos = ord($pos)%64;}
+																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+																	#print $DigPos."\n";
+																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+																	}
+																}
+														}
+														if ($lineDig =~ "\;"){
+														$power-> write($rowP, 4, $Total_Pin, $format_item);
+														$power-> write($rowP, 5, $Power_Pin, $format_VCC);
+														$power-> write($rowP, 6, $GND_Pin, $format_GND);
+														#$power-> write($rowP, 7, $Toggle_Pin, $format_item);
+														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
+														$power-> write($rowP, 8, $NC_Pin, $format_NC);
+														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
+														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/E".($rowP+1).")", $format_FPY);
+														last;}
+														}
+													}
+												}
+											}
+  										}
+  									close Boards;}
+
+									###### hyperlink #####################################
+									$power-> write($rowP, 0, $device, $format_hylk);  			## Excel ##
+
 									#$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1689,11 +1905,11 @@ foreach $device (@bom_list)
 										#print $lineTF;
 										if (substr($lineTF,0,6) eq "family")
 										{$family = $lineTF . $family;}
-  										#{$power-> write($rowP, 2, $lineTF, $format_data);}  	## Excel ##
+  										#{$power-> write($rowP, 3, $lineTF, $format_data);}  	## Excel ##
   									}
   									close SourceFile;
   									chomp($family);
-  									$power-> write($rowP, 2, $family, $format_anno);
+  									$power-> write($rowP, 3, $family, $format_anno);
 									$rowP++;
   								}
 							if (substr($lineTP,$StartBit_TP,$StopBit_TP) eq $testname	#matching skipped test in TP
@@ -1704,7 +1920,7 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -1712,13 +1928,13 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ untestable digital test ##########################################################################################
 			elsif(substr($lineTO,$StartBit_TO,$StopBit_TO) eq $device
@@ -1753,7 +1969,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			ANA_PWD_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1803,10 +2019,13 @@ foreach $device (@bom_list)
 								if (index($lineTP,"on boards")> -1)
 									{
 									$testfile = "analog/1%".$testname;
-									}	
-									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									}
+									#print $device,"\n";
+									$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
+									$power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);  ## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1821,7 +2040,7 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -1829,13 +2048,13 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ untestable analog powered test ######################################################################################
 			elsif(substr($lineTO,$StartBit_TO,$StopBit_TO) eq $device
@@ -1862,6 +2081,7 @@ foreach $device (@bom_list)
 					if (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,6);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n";
 						#$untest-> write($rowU, 2, $UTline, $format_anno); 
@@ -1869,6 +2089,7 @@ foreach $device (@bom_list)
 					}
 					chomp($UTline);
 					$untest-> write($rowU, 2, $UTline, $format_anno);
+					$untest-> set_column(2, 2, $length_anno);
 					$rowU++;
 					close ALL;
 				}
@@ -1900,20 +2121,24 @@ foreach $device (@bom_list)
 					if (index($line,$device1)>1){#4.4# print Nulltested $line;
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,6);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,6);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,6);
+						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n"; 
 						last;}
 					}
 					chomp($UTline);
 					$untest-> write($rowU, 2, $UTline, $format_anno);
+					$untest-> set_column(2, 2, $length_anno);
 					$rowU++;
 				close ALL;
 				}
@@ -1931,7 +2156,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			Mixed_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1981,10 +2206,13 @@ foreach $device (@bom_list)
 								if (index($lineTP,"on boards")> -1)
 									{
 									$testfile = "analog/1%".$testname;
-									}	
+									}
 									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
+									$power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);  ## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -1999,7 +2227,7 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -2007,13 +2235,13 @@ foreach $device (@bom_list)
 								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ untestable mixed device ##########################################################################################
 			elsif(substr($lineTO,$StartBit_TO,$StopBit_TO) eq $device
@@ -2047,7 +2275,7 @@ foreach $device (@bom_list)
 					$foundTO = 1;
 					print "			Bscan_Test  ", substr($lineTO,index($lineTO,$device)-1, length($lineTO)-index($lineTO,$device)+1),"\n";   #, $lineTO,"\n";
 					#4.4# print PowerTest $lineTO,"\n";
-					#4.6# $power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
+					#4.6# $power-> write($rowP, 1, $lineTO, $format_data);  ## Excel ##
 
 				 		$testname = substr($lineTO,index($lineTO,"\"") + 1, rindex($lineTO,"\"") - index($lineTO,"\"") - 1);
 						open (TesP, "<testplan");												#### check testplan ####
@@ -2094,19 +2322,134 @@ foreach $device (@bom_list)
 									{
 									$testfile = substr($lineTP,index($lineTP,"\"") + 1, $device_len + 1);
 									}
-								if (index($lineTP,"on boards")> -1)
-									{
-									$testfile = "digital/1%".$testname;
-									}
 								if ($lineTP =~ '\"'.$testname.'"' and $lineTP =~ "test"
 									and substr($lineTP,0,1) ne "\!")
 									{
 									$testfile = "digital/".$testname;
 										}
+								if (index($lineTP,"on boards")> -1)
+									{
+									$testfile = "digital/1%".$testname;
+									}
 									#print $lineTP,"\n";
-									#print $testfile,"\n";
-									$power-> write($rowP, 0, $lineTO, $format_data);  ## Excel ##
-									$power-> write($rowP, 1, $lineTP, $format_data);  ## Excel ##
+									#print $device,"\n";
+									$power-> write($rowP, 1, $lineTO, $format_data);  				## Excel ##
+									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									$power-> write($rowP, 2, $lineTP, $format_data);  				## Excel ##
+									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
+									###### hyperlink #####################################
+									$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');    	## hyperlink
+
+									if ($worksheet == 0){
+									$worksheet = 1;
+									$IC = $bom_coverage_report-> add_worksheet($device);			## hyperlink
+									$IC-> write_url('A1', 'internal:PowerTest!A1');  				## hyperlink
+									$IC->conditional_formatting('A1:GR999',
+									    {
+									    	type     => 'text',
+									     	criteria => 'containing',
+									     	value    => 'Toggle_Test',
+									     	format   => $format_togg,
+									    });
+
+									$length_SNail = 8;
+									open (Boards, "< board");
+									while($lineDig = <Boards>)								
+									{
+										$lineDig =~ s/(^\s+|\s+$)//g;
+										#print $lineDig;
+										if (substr($lineDig,0,7) eq "DEVICES")
+											{
+											while($lineDig = <Boards>)								
+												{
+												#chomp($lineDig);
+												$lineDig =~ s/(^\s+|\s+$)//g;
+												$device1 = uc($device);
+												#print $lineDig."\n";
+												if ($lineDig eq $device1)
+													{while($lineDig = <Boards>) 
+														{#print $lineDig;
+														$Total_Pin++;
+														@BscanNail = split('\.',$lineDig);
+														$BscanNail[0] =~ s/(^\s+|\s+$)//g;
+														$BscanNail[1] =~ s/(^\s+|\s+$)//g;
+														#print $BscanNail[0]."\n";
+														if ($BscanNail[1] =~ /(GND|GROUND)/){
+															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_GND); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_GND);
+															($pos) = $BscanNail[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$NailPos = ord($pos)%64;}
+															if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $NailPos."\n";
+															if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															}
+															$GND_Pin++;
+														}
+														elsif ($BscanNail[1] =~ /(VCC|VDD|0V6|0V8|0V9|1V1|1V2|1V5|1V8|1P8V|V_1P8|2V5|2P5V|V_2P5|3V3|3P3V|V_3P3|3V8|5V0|12V|20V)/){
+															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_VCC); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_VCC);
+															($pos) = $BscanNail[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$NailPos = ord($pos)%64;}
+															if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $NailPos."\n";
+															if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															}
+															$Power_Pin++;
+														}
+														elsif ($BscanNail[1] =~ /(^NC_|_NC$|NONE)/){
+															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_NC); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_NC);
+															($pos) = $BscanNail[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$NailPos = ord($pos)%64;}
+															if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $NailPos."\n";
+															if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															}
+															$NC_Pin++;
+														}
+														else{
+															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_data); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_data);
+															($pos) = $BscanNail[0] =~ /^\D+/g;
+															#print $pos."\n";
+															#print substr($pos,0,1)."\n";
+															#print length($pos)."\n";
+															if (length($pos) == 1){$NailPos = ord($pos)%64;}
+															if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															#print $NailPos."\n";
+															if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															}
+														}
+														if ($lineDig =~ "\;"){
+														$power-> write($rowP, 4, $Total_Pin, $format_item);
+														$power-> write($rowP, 5, $Power_Pin, $format_VCC);
+														$power-> write($rowP, 6, $GND_Pin, $format_GND);
+														#$power-> write($rowP, 7, $Toggle_Pin, $format_togg);
+														#$power-> write_formula($rowP, 7, '=COUNTIF(u0600!A1:GR999, "*Toggle_Test")', $format_togg);
+														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
+														$power-> write($rowP, 8, $NC_Pin, $format_NC);
+														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
+														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/E".($rowP+1).")", $format_FPY);
+														last;}
+														}
+													}
+												}
+											}
+  										}
+  									close Boards;}
+
+									###### hyperlink #####################################
+									$power-> write($rowP, 0, $device, $format_hylk);  				## Excel ##
+
 									#$rowP++;
 									  if ($testfile eq $testfile_last){last;}				#ignore duplicated test name
 									  $commentTP = "";
@@ -2122,11 +2465,30 @@ foreach $device (@bom_list)
 										#print $lineTF;
 										if (substr($lineTF,0,6) eq "family")
 										{$family = $lineTF . $family;}
-  										#{$power-> write($rowP, 2, $lineTF, $format_data);}  	## Excel ##
-  									}
+  										
+  										if (substr($lineTF,0,5) eq "nodes")
+											{while($lineTF = <SourceFile>)
+												{
+													$lineTF =~ s/(^\s+|\s+$)//g;
+													if ($lineTF =~ "end nodes"){last;}
+													if (substr($lineTF,0,1) ne "\!") 
+													{
+														#print $lineTF."\n";
+														@BscanNail = split('\"',$lineTF);
+														#print $BscanNail[1]."\n";
+														#print $BscanNail[3]."\n";
+														$BscanPin = substr($BscanNail[3], index($BscanNail[3],"\.")+1);
+														#print $BscanPin."\n";
+														if ($BscanPin =~ /^\d/){$IC-> write(int($BscanPin)-1, 0, $BscanNail[1]."\n  Toggle_Test", $format_togg);}
+														if ($BscanPin =~ /^\D/i){$IC-> write($BscanPin, $BscanNail[1]."\n  Toggle_Test", $format_togg);}
+														$Toggle_Pin++;
+														}
+													}
+												}
+  										}
   									close SourceFile;
   									chomp($family);
-  									$power-> write($rowP, 2, $family, $format_anno);
+  									$power-> write($rowP, 3, $family, $format_anno);
 									$rowP++;
   								}
 							if (substr($lineTP,$StartBit_TP,$StopBit_TP) eq $testname	#matching skipped test in TP
@@ -2137,21 +2499,21 @@ foreach $device (@bom_list)
 									if ($testname eq $testname_last){last;}					#ignore duplicated test name
   									$testname_last = $testname;
 									#4.4# printf Nulltested "%-30s", $testname; print Nulltested "been skipped in TestPlan."; printf Nulltested "%-15s"; print Nulltested substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!"))."\n";
-								#	$power-> write($rowP, 0, $testname, $format_data);  ## Excel ##
+								#	$power-> write($rowP, 1, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
-								#	$power-> write($rowP, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
+								#	$power-> write($rowP, 3, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_data);  ## Excel ##
 								}
 							elsif (eof and $foundTP == 0){#4.4# printf Nulltested "%-30s", $device; print Nulltested "NO test item found in TestPlan.\n"; 
-						#	$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
-							$power-> write($rowP, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
+							$untest-> write($rowU, 2, $lineTO, $format_anno);  ## Excel ##
+							$rowU++;
 							goto Next_Dev;}
 							}
 						close TesP;
-
-					#$rowP++;
 				}
 			################ untestable Bscan device #####################################################################################
 			elsif(substr($lineTO,index($lineTO,$device) + length($device),8) eq "_connect"
@@ -2204,7 +2566,7 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 			{
 				$thres = substr($nodes, index($nodes,"threshold")+10);
 				if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
-				$thres =~ s/\s//g;                     #clear all spacing
+				$thres =~ s/(^\s+|\s+$)//g;                     #clear all spacing
 			}
 		if ($nodes =~ "nodes")
 		{
