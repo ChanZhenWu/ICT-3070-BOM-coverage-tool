@@ -60,8 +60,8 @@ $short_thres-> set_column(0,1,30);		#设置列宽
 $summary-> activate();					#设置初始可见
 
 #新建一个格式
-$format_item = $bom_coverage_report-> add_format(bold=>1, align=>'left', border=>1, size=>12, bg_color=>'cyan');
-$format_head = $bom_coverage_report-> add_format(bold=>1, align=>'vcenter', border=>1, size=>12, bg_color=>'lime');
+$format_item = $bom_coverage_report-> add_format(bold=>1, align=>'left', valign=>'vcenter', border=>1, size=>12, bg_color=>'cyan');
+$format_head = $bom_coverage_report-> add_format(bold=>1, valign=>'vcenter', border=>1, size=>12, bg_color=>'lime');
 $format_data = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1);
 $format_GND  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'gray');
 $format_NC   = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'silver');
@@ -1878,7 +1878,7 @@ foreach $device (@bom_list)
 														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
 														$power-> write($rowP, 8, $NC_Pin, $format_NC);
 														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
-														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/E".($rowP+1).")", $format_FPY);
+														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-I".($rowP+1)."))", $format_FPY);
 														last;}
 														}
 													}
@@ -2438,7 +2438,7 @@ foreach $device (@bom_list)
 														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
 														$power-> write($rowP, 8, $NC_Pin, $format_NC);
 														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
-														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/E".($rowP+1).")", $format_FPY);
+														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-I".($rowP+1)."))", $format_FPY);
 														last;}
 														}
 													}
