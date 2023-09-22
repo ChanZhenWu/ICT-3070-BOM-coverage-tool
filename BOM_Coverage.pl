@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v4.9.9>\n";
+print "  Bom Coverage ckecking tool for 3070 <v5.0.2>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -51,27 +51,31 @@ $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
 $tested-> set_column(0,5,20);			#设置列宽
+$untest-> set_column(0,1,20);			#设置列宽
 $untest-> set_column(1,1,40);			#设置列宽
+$limited-> set_column(0,1,20);			#设置列宽
 $limited-> set_column(1,1,30);			#设置列宽
+$power-> set_column(0,1,20);			#设置列宽
 $power-> set_column(1,3,30);			#设置列宽
-$power-> set_column(4,10,15);			#设置列宽
-$short_thres-> set_column(0,1,30);		#设置列宽
+$power-> set_column(4,12,15);			#设置列宽
+$short_thres-> set_column(0,1,40);		#设置列宽
 
 $summary-> activate();					#设置初始可见
 
 #新建一个格式
 $format_item = $bom_coverage_report-> add_format(bold=>1, align=>'left', valign=>'vcenter', border=>1, size=>12, bg_color=>'cyan');
 $format_head = $bom_coverage_report-> add_format(bold=>1, valign=>'vcenter', border=>1, size=>12, bg_color=>'lime');
-$format_data = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1);
+$format_data = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, text_wrap=>1);
 $format_GND  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'gray');
 $format_NC   = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'silver');
 $format_VCC  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'orange');
 $format_togg = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'green', text_wrap=>1);
+$format_pin  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, bg_color=>'lime', text_wrap=>1);
 $format_anno = $bom_coverage_report-> add_format(align=>'left', valign=>'vcenter', border=>1, text_wrap=>1);
 $format_PCT  = $bom_coverage_report-> add_format(align=>'center', border=>1, num_format=> '10');
 $format_STP  = $bom_coverage_report-> add_format(color=>'red', align=>'center', border=>1, bg_color=>'yellow');
 $format_hylk = $bom_coverage_report-> add_format(color=>'blue', align=>'center', valign=>'vcenter', border=>1, underline=>1);
-$format_FPY  = $bom_coverage_report-> add_format(align=>'center', border=>1, num_format=> '10');
+$format_FPY  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, num_format=> '10');
 
 $row = 0; $col = 0;
 $tested-> write($row, $col, '<Device>', $format_head);
@@ -115,11 +119,15 @@ $power-> write($row, $col, '<GND Pin>', $format_GND);
 $row = 0; $col = 7;
 $power-> write($row, $col, '<Toggle Test Pin>', $format_togg);
 $row = 0; $col = 8;
-$power-> write($row, $col, '<NC Pin>', $format_NC);
+$power-> write($row, $col, '<Pin Test>', $format_pin);
 $row = 0; $col = 9;
-$power-> write($row, $col, '<Untest Pin>', $format_data);
+$power-> write($row, $col, '<NC Pin>', $format_NC);
 $row = 0; $col = 10;
-$power-> write($row, $col, '<Pin Coverage>', $format_head);
+$power-> write($row, $col, '<Untest Pin>', $format_data);
+$row = 0; $col = 11;
+$power-> write($row, $col, '<Toggle Coverage>', $format_togg);
+$row = 0; $col = 12;
+$power-> write($row, $col, '<Pin Coverage>', $format_pin);
 
 $row = 0; $col = 0;
 $short_thres-> write($row, $col, 'Nodes', $format_head);
@@ -187,6 +195,28 @@ $power-> conditional_formatting('H2:H9999',
      	criteria => 'greater than',
      	value    => 0,
      	format   => $format_togg,
+    });
+$power-> conditional_formatting('L2:L9999',
+    {
+    	type     => 'cell',
+     	criteria => 'greater than',
+     	value    => 0,
+     	format   => $format_togg,
+    });
+
+$power-> conditional_formatting('I2:I9999',
+    {
+    	type     => 'cell',
+     	criteria => 'greater than',
+     	value    => 0,
+     	format   => $format_pin,
+    });
+$power-> conditional_formatting('M2:M9999',
+    {
+    	type     => 'cell',
+     	criteria => 'greater than',
+     	value    => 0,
+     	format   => $format_pin,
     });
 
 my $chart = $bom_coverage_report-> add_chart( type => 'pie', embedded => 1 );
@@ -1752,7 +1782,15 @@ foreach $device (@bom_list)
 									     	format   => $format_togg,
 									    });
 									
-									$length_DigPin = 8;
+									$IC->conditional_formatting('A1:GR999',
+									    {
+									    	type     => 'text',
+									     	criteria => 'containing',
+									     	value    => 'Contact_Test',
+									     	format   => $format_pin,
+									    });
+									
+									$length_DigPin = 10;
 									open (Boards, "< board");
 									while($lineDig = <Boards>)								
 									{
@@ -1817,17 +1855,17 @@ foreach $device (@bom_list)
 															$NC_Pin++;
 														}
 														else{
-														my $BDG_File = "bdg_data/dig_inc_ver_fau.dat";
+														my $BDG_File = "./bdg_data/dig_inc_ver_fau.dat";
 														if(-e $BDG_File){
-															open (BDGFile, "< bdg_data/dig_inc_ver_fau.dat");
+															open (BDGFile, "< ./bdg_data/dig_inc_ver_fau.dat");
 															while($BDGline = <BDGFile>)
 															{
 															$BDGline =~ s/(^\s+|\s+$)//g;
 															if($BDGline =~ $device and $BDGline =~ substr($DigPin[1], 0, length($DigPin[1])-1))
 																{
 																#print $BDGline."\n";
-																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n  Toggle_Test", $format_togg); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
-																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n  Toggle_Test", $format_togg);
+																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Toggle_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n* Toggle_Test", $format_data);
 																	($pos) = $DigPin[0] =~ /^\D+/g;
 																	#print $pos."\n";
 																	#print substr($pos,0,1)."\n";
@@ -1836,13 +1874,23 @@ foreach $device (@bom_list)
 																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
 																	#print $DigPos."\n";
 																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
-																	}
-																last;
-																}
-															elsif (eof){
+																	}last;}
+															elsif(eof){
+																open (Pin, "< pins") || open (Pin, "< 1%pins"); 
+																	while($nodes = <Pin>)
+																	{
+																		$nodes =~ s/(^\s+|\s+$)//g;
+																		@nodes = split('\"',$nodes);
+																		if ($nodes[1] eq $DigPin[1] and substr($nodes[0], 0, 5) eq "nodes"
+																		or substr($nodes[1],2) eq $DigPin[1] and substr($nodes[0], 0, 5) eq "nodes")
+																			{
+																			#print $nodes[0]."\n";
+																			#print $nodes[1]."\n";
+																			#print $DigPin[1]."\n";
+																			#print "	".$DigPin[0]."\n";
 																#print $BDGline."\n";
-																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
-																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_data);
+																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Contact_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n* Contact_Test", $format_data);
 																	($pos) = $DigPin[0] =~ /^\D+/g;
 																	#print $pos."\n";
 																	#print substr($pos,0,1)."\n";
@@ -1851,24 +1899,24 @@ foreach $device (@bom_list)
 																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
 																	#print $DigPos."\n";
 																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+																	}last;}
+																	 elsif(eof){
+																	 if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
+																	 if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_data);
+																	 ($pos) = $DigPin[0] =~ /^\D+/g;
+																	 #print $pos."\n";
+																	 #print substr($pos,0,1)."\n";
+																	 #print length($pos)."\n";
+																	 if (length($pos) == 1){$DigPos = ord($pos)%64;}
+																	 if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+																	 #print $DigPos."\n";
+																	 if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
+																	 }last;}
 																	}
-																last;
+																close Pin;
 																}
 															}
 															close BDGfile;}
-															else{
-																if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin);}
-																if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_data);
-																	($pos) = $DigPin[0] =~ /^\D+/g;
-																	#print $pos."\n";
-																	#print substr($pos,0,1)."\n";
-																	#print length($pos)."\n";
-																	if (length($pos) == 1){$DigPos = ord($pos)%64;}
-																	if (length($pos) == 2){$DigPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
-																	#print $DigPos."\n";
-																	if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column($DigPos-1, $DigPos-1, $length_DigPin);
-																	}
-																}
 														}
 														if ($lineDig =~ "\;"){
 														$power-> write($rowP, 4, $Total_Pin, $format_item);
@@ -1876,9 +1924,11 @@ foreach $device (@bom_list)
 														$power-> write($rowP, 6, $GND_Pin, $format_GND);
 														#$power-> write($rowP, 7, $Toggle_Pin, $format_item);
 														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-														$power-> write($rowP, 8, $NC_Pin, $format_NC);
-														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
-														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-I".($rowP+1)."))", $format_FPY);
+														$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+														$power-> write($rowP, 9, $NC_Pin, $format_NC);
+														$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
+														$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
+														$power-> write_formula($rowP, 12, "=(I".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
 														last;}
 														}
 													}
@@ -2351,8 +2401,16 @@ foreach $device (@bom_list)
 									     	value    => 'Toggle_Test',
 									     	format   => $format_togg,
 									    });
+									    
+									$IC->conditional_formatting('A1:GR999',
+									    {
+									    	type     => 'text',
+									     	criteria => 'containing',
+									     	value    => 'Contact_Test',
+									     	format   => $format_pin,
+									    });
 
-									$length_SNail = 8;
+									$length_SNail = 10;
 									open (Boards, "< board");
 									while($lineDig = <Boards>)								
 									{
@@ -2417,8 +2475,20 @@ foreach $device (@bom_list)
 															$NC_Pin++;
 														}
 														else{
-															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_data); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
-															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_data);
+															open (Pin, "< pins") || open (Pin, "< 1%pins"); 
+																while($nodes = <Pin>)
+																{
+																	$nodes =~ s/(^\s+|\s+$)//g;
+																	@nodes = split('\"',$nodes);
+																	if ($nodes[1] eq $BscanNail[1] and substr($nodes[0], 0, 5) eq "nodes"
+																	or substr($nodes[1],2) eq $BscanNail[1] and substr($nodes[0], 0, 5) eq "nodes")
+																		{
+																		#print $nodes[0]."\n";
+																		#print $nodes[1]."\n";
+																		#print $BscanNail[0]."\n";
+																		#print "	".$BscanNail[1]."\n";
+															if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1]."\n* Contact_Test", $format_data); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1]."\n* Contact_Test", $format_data);
 															($pos) = $BscanNail[0] =~ /^\D+/g;
 															#print $pos."\n";
 															#print substr($pos,0,1)."\n";
@@ -2427,18 +2497,36 @@ foreach $device (@bom_list)
 															if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
 															#print $NailPos."\n";
 															if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															}last;}
+															 elsif(eof){
+															 #print $BscanNail[0]."\n";
+															 #print $BscanNail[1]."\n";
+															 if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_data); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail);}
+															 if ($BscanNail[0] =~ /^\D/i){$IC-> write($BscanNail[0], $BscanNail[1], $format_data);
+															 ($pos) = $BscanNail[0] =~ /^\D+/g;
+															 #print $pos."\n";
+															 #print substr($pos,0,1)."\n";
+															 #print length($pos)."\n";
+															 if (length($pos) == 1){$NailPos = ord($pos)%64;}
+															 if (length($pos) == 2){$NailPos = int(ord(substr($pos,0,1))%64) * 26 + ord(substr($pos,1,1))%64;}
+															 #print $NailPos."\n";
+															 if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column($NailPos-1, $NailPos-1, $length_SNail);
+															 }}
 															}
+															close Pin;
 														}
 														if ($lineDig =~ "\;"){
 														$power-> write($rowP, 4, $Total_Pin, $format_item);
 														$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 														$power-> write($rowP, 6, $GND_Pin, $format_GND);
 														#$power-> write($rowP, 7, $Toggle_Pin, $format_togg);
-														#$power-> write_formula($rowP, 7, '=COUNTIF(u0600!A1:GR999, "*Toggle_Test")', $format_togg);
+														#$power-> write_formula($rowP, 7, '=COUNTIF(u0600!A1:GR999, "* Toggle_Test")', $format_togg);
 														$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-														$power-> write($rowP, 8, $NC_Pin, $format_NC);
-														$power-> write_formula($rowP, 9, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1).")", $format_data);
-														$power-> write_formula($rowP, 10, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-I".($rowP+1)."))", $format_FPY);
+														$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+														$power-> write($rowP, 9, $NC_Pin, $format_NC);
+														$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
+														$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
+														$power-> write_formula($rowP, 12, "=(I".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
 														last;}
 														}
 													}
@@ -2479,8 +2567,8 @@ foreach $device (@bom_list)
 														#print $BscanNail[3]."\n";
 														$BscanPin = substr($BscanNail[3], index($BscanNail[3],"\.")+1);
 														#print $BscanPin."\n";
-														if ($BscanPin =~ /^\d/){$IC-> write(int($BscanPin)-1, 0, $BscanNail[1]."\n  Toggle_Test", $format_togg);}
-														if ($BscanPin =~ /^\D/i){$IC-> write($BscanPin, $BscanNail[1]."\n  Toggle_Test", $format_togg);}
+														if ($BscanPin =~ /^\d/){$IC-> write(int($BscanPin)-1, 0, $BscanNail[1]."\n* Toggle_Test", $format_data);}
+														if ($BscanPin =~ /^\D/i){$IC-> write($BscanPin, $BscanNail[1]."\n* Toggle_Test", $format_data);}
 														$Toggle_Pin++;
 														}
 													}
