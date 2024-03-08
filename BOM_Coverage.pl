@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v5.0.2>\n";
+print "  Bom Coverage ckecking tool for 3070 <v5.0.3>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -1628,6 +1628,7 @@ foreach $device (@bom_list)
 					if (index($line,$device)>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						$line =~ s/(^\s+)//g;
 						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n";
@@ -1669,16 +1670,19 @@ foreach $device (@bom_list)
 					if (index($line,$device1)>1){#4.4# print Nulltested $line;
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						$line =~ s/(^\s+)//g;
 						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"not accessible")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						$line =~ s/(^\s+)//g;
 						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (index($line,"tested in file")>1){#4.4# print Nulltested $line; 
 						#$untest-> write($rowU, 2, $line, $format_anno);
 						$line = substr($line,1);
+						$line =~ s/(^\s+)//g;
 						if (length($line)> $length_anno){$length_anno = length($line);}
 						$UTline = $line . $UTline;}
 					elsif (eof){#4.4# print Nulltested "\n"; 
