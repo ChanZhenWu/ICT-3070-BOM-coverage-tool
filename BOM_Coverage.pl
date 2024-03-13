@@ -705,7 +705,7 @@ foreach $device (@bom_list)
 									
 									if ($worksheet == 0){
 									$worksheet = 1;
-									my $IC = $bom_coverage_report-> add_worksheet($device);		## hyperlink
+									my $IC = $bom_coverage_report-> add_worksheet($device);   ## hyperlink
 									$IC-> write_url('A1', 'internal:PowerTest!A1');  			## hyperlink
 									$IC->conditional_formatting('A1:GR999',
 									    {
@@ -866,7 +866,7 @@ foreach $device (@bom_list)
 									while($lineTF = <SourceFile>)							#reading family
 									{
 										chomp;
-										$lineTF =~ s/(^\s+|\s+$)//g;						#clear head of line spacing
+										$lineTF =~ s/(^\s+)//g;								#clear head of line spacing
 										#print $lineTF;
 										if (substr($lineTF,0,6) eq "family")
 										{$family = $lineTF . $family;}
