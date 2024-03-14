@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v5.8>\n";
+print "  Bom Coverage ckecking tool for 3070 <v5.9>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -251,8 +251,13 @@ foreach $device (@bom_list)
 	$device =~ s/(^\s+|\s+$)//g;                     #clear all spacing
 	$device = lc($device);
 
-	$rowC = $rowC+1;	$cover = 0;
+	$rowC = $rowC+1;	$cover = 0;	$UNCover = 0;
 	$coverage-> write($rowC, 0, $device, $format_data);			#Coverage
+	$coverage-> write($rowC, 1, "-", $format_data);
+	$coverage-> write($rowC, 2, "-", $format_data);
+	$coverage-> write($rowC, 3, "-", $format_data);
+	$coverage-> write($rowC, 4, "-", $format_data);
+	$coverage-> write($rowC, 5, "-", $format_data);
 	$len_device = length($device);
 	print "	Analyzing ", $device, " .....\n";
 	#************************ Testorder Checking *******************************************
@@ -286,9 +291,12 @@ foreach $device (@bom_list)
           )
 				{
 					$foundTO = 1;
-					$cover = 0;
 					$learn = 0;
 					print "			General Test ", $DevTO[1],"\n";   #, $lineTO,"\n";
+			$tested-> write($rowT, 2, "-", $format_data);
+			$tested-> write($rowT, 3, "-", $format_data);
+			$tested-> write($rowT, 4, "-", $format_data);
+
 					$testname = $DevTO[1];
 				  	#print $testname,"\n";	print length($testname),"\n";
 					open (TesP, "<testplan");												#### check testplan ####
@@ -307,6 +315,7 @@ foreach $device (@bom_list)
 								and substr($lineTP,0,4) eq "test")							#matching not skipped test name
 								{
 									$foundTP = 1;
+									$UNCover = 1;
 								#print $lineTP,"\n"; print substr($lineTP,0,1)."\n";
 								if (substr($DevTP[1],7) eq $testname and index($lineTP,"on boards")== -1)
 									{$testfile = $DevTP[1];}
@@ -320,7 +329,6 @@ foreach $device (@bom_list)
 									$commentTP = "";
 								if (index($lineTP,"\!")> -1) {$commentTP = substr($lineTP,rindex($lineTP,"\!"));}   #TP comments
   									$coverage-> write($rowC, 1, 'V', $format_togg);			#Coverage
-									$cover = $cover+1;
 
 								open (SourceFile, "<$testfile");
 									while($lineTF = <SourceFile>)							#read parameter
@@ -466,7 +474,7 @@ foreach $device (@bom_list)
 									#print Nulltested $lineTP, "\n";
 									if ($testname eq $testname_last){last;}																		#ignore duplicated test name
   									$testname_last = $testname;
-									if ($cover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+									if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
 									$untest-> write($rowU, 0, $testname, $format_data);		## Excel ##
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
@@ -482,6 +490,43 @@ foreach $device (@bom_list)
 							}
 					close TesP;
 				}
+			################ untestable devices ###########################################################################################
+			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
+			and substr($DevTO[1],0,length($device)) eq $device
+          and $nullTO > -1
+          and $comment1 > -1
+          and $comment2 == -1
+          and $powered == -1
+          and $scan == -1
+          and $digital == -1
+          and $mixed == -1
+          and $ver == -1
+          )
+				{
+					$foundTO = 1;
+					print "			NULL_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
+
+					$untest-> write($rowU, 0, $DevTO[1], $format_data);  ## Excel ##
+					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
+				$UTline = "";
+
+				if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+				open(ALL, "<analog/$DevTO[1]")||open(ALL, "<analog/1%$DevTO[1]") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno);
+				while($line = <ALL>)
+					{
+					if (index($line,$device)>1){
+						$line = substr($line,1);
+						$line =~ s/(^\s+)//g;
+						if (length($line)> $length_anno){$length_anno = length($line);}
+						$UTline = $line . $UTline;}
+					elsif (eof){last;}
+					}
+					$UTline =~ s/(^\s+|\s+$)//g;
+					$untest-> write($rowU, 2, $UTline, $format_anno);
+					$untest-> set_column(2, 2, $length_anno);
+				$rowU++;
+				close ALL;
+				}
 			################ testable analog powered test #################################################################################
 			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
 				and substr($DevTO[1],0,length($device)) eq $device
@@ -495,8 +540,17 @@ foreach $device (@bom_list)
           )
 				{
 					$foundTO = 1;
-					$cover = 0;
+					#$cover = 0;
 					print "			ANA_PWD_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
+			$power-> write($rowP, 4, "-", $format_data);
+			$power-> write($rowP, 5, "-", $format_data);
+			$power-> write($rowP, 6, "-", $format_data);
+			$power-> write($rowP, 7, "-", $format_data);
+			$power-> write($rowP, 8, "-", $format_data);
+			$power-> write($rowP, 9, "-", $format_data);
+			$power-> write($rowP, 10, "-", $format_data);
+			$power-> write($rowP, 11, "-", $format_data);
+			$power-> write($rowP, 12, "-", $format_data);
 
 				 		$testname = $DevTO[1];
 						open (TesP, "<testplan");											#### check testplan ####
@@ -525,23 +579,24 @@ foreach $device (@bom_list)
   									$testfile_last = $testfile;
 									$commentTP = "";
 								if (index($lineTP,"\!")> -1) {$commentTP = substr($lineTP,rindex($lineTP,"\!"));}   #TP comments
-								$coverage-> write($rowC, 3, 'V', $format_togg);			#Coverage
-								#$cover = $cover+1;
 								
 									$power-> write($rowP, 0, $device, $format_data);		## Excel ##
 									$power-> write($rowP, 1, $lineTO, $format_anno);		## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
 									if(substr($lineTP,0,4) eq "test"){
+
+									$cover = 1;
+									$coverage-> write($rowC, 3, 'V', $format_togg);			#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno);		## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
 									if(substr($lineTP,0,1) eq "\!"){
+
 									$PowerUT = $PowerUT + 1;
 									if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno1);		## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
-									$cover = $cover+1;
 									$rowP++;
 									last;
   								}
@@ -587,41 +642,6 @@ foreach $device (@bom_list)
 					$limited-> write($rowL, 0, $DevTO[1], $format_data);	## Excel ##
 					$limited-> write($rowL, 1, $anno, $format_anno);		## Excel ##
 					$rowL++;
-				}
-			################ untestable devices ###########################################################################################
-			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-			and substr($DevTO[1],0,length($device)) eq $device
-          and $nullTO > -1
-          and $comment1 > -1
-          and $comment2 == -1
-          and $powered == -1
-          and $scan == -1
-          and $digital == -1
-          and $mixed == -1
-          and $ver == -1
-          )
-				{
-					$foundTO = 1;
-					print "			NULL_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
-					$untest-> write($rowU, 0, $DevTO[1], $format_data);  ## Excel ##
-					$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-				$UTline = "";
-				if($cover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
-				open(ALL, "<analog/$DevTO[1]")||open(ALL, "<analog/1%$DevTO[1]") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno);
-				while($line = <ALL>)
-					{
-					if (index($line,$device)>1){
-						$line = substr($line,1);
-						$line =~ s/(^\s+)//g;
-						if (length($line)> $length_anno){$length_anno = length($line);}
-						$UTline = $line . $UTline;}
-					elsif (eof){last;}
-					}
-					$UTline =~ s/(^\s+|\s+$)//g;
-					$untest-> write($rowU, 2, $UTline, $format_anno);
-					$untest-> set_column(2, 2, $length_anno);
-				$rowU++;
-				close ALL;
 				}
 			################ multi-test(%)powered untestable device #######################################################################
 		#	elsif($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%"		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
@@ -681,9 +701,18 @@ foreach $device (@bom_list)
           )
 				{
 					$foundTO = 1;
-					$cover = 0;
+					#$cover = 0;
 					$length_DigPin = 10;
 					print "			Digital_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
+			$power-> write($rowP, 4, "-", $format_data);
+			$power-> write($rowP, 5, "-", $format_data);
+			$power-> write($rowP, 6, "-", $format_data);
+			$power-> write($rowP, 7, "-", $format_data);
+			$power-> write($rowP, 8, "-", $format_data);
+			$power-> write($rowP, 9, "-", $format_data);
+			$power-> write($rowP, 10, "-", $format_data);
+			$power-> write($rowP, 11, "-", $format_data);
+			$power-> write($rowP, 12, "-", $format_data);
 
 				 		$testname = $DevTO[1];
 						open (TesP, "<testplan");											#### check testplan ####
@@ -711,12 +740,13 @@ foreach $device (@bom_list)
   									$testfile_last = $testfile;
 									$commentTP = "";
 								if (index($lineTP,"\!")> -1) {$commentTP = substr($lineTP,rindex($lineTP,"\!"));}   #TP comments
-								$coverage-> write($rowC, 2, 'V', $format_togg);				#Coverage
-								#$cover = $cover+1;
 
 									$power-> write($rowP, 1, $lineTO, $format_anno);  			## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+
 									if(substr($lineTP,0,4) eq "test"){
+									$cover = 1;
+									$coverage-> write($rowC, 2, 'V', $format_togg);				#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno);			## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
@@ -726,7 +756,6 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 2, $lineTP, $format_anno1);			## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
-									$cover = $cover+1;
 									###### hyperlink #####################################
 									$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');	## hyperlink
 									
@@ -992,8 +1021,17 @@ foreach $device (@bom_list)
           )
 				{
 					$foundTO = 1;
-					$cover = 0;
+					#$cover = 0;
 					print "			Mixed_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
+			$power-> write($rowP, 4, "-", $format_data);
+			$power-> write($rowP, 5, "-", $format_data);
+			$power-> write($rowP, 6, "-", $format_data);
+			$power-> write($rowP, 7, "-", $format_data);
+			$power-> write($rowP, 8, "-", $format_data);
+			$power-> write($rowP, 9, "-", $format_data);
+			$power-> write($rowP, 10, "-", $format_data);
+			$power-> write($rowP, 11, "-", $format_data);
+			$power-> write($rowP, 12, "-", $format_data);
 
 				 		$testname = $DevTO[1];
 						open (TesP, "<testplan");												#### check testplan ####
@@ -1021,13 +1059,14 @@ foreach $device (@bom_list)
   									$testfile_last = $testfile;
 									$commentTP = "";
 								if (index($lineTP,"\!")> -1) {$commentTP = substr($lineTP,rindex($lineTP,"\!"));}   #TP comments
-								$coverage-> write($rowC, 3, 'V', $format_togg);			#Coverage
-								#$cover = $cover+1;
 
 									$power-> write($rowP, 0, $device, $format_data);  ## Excel ##
 									$power-> write($rowP, 1, $lineTO, $format_anno);  ## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+
 									if(substr($lineTP,0,4) eq "test"){
+									$cover = 1;
+									$coverage-> write($rowC, 3, 'V', $format_togg);		#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno);  ## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
@@ -1037,7 +1076,6 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 2, $lineTP, $format_anno1);  ## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
-									$cover = $cover+1;
 									$rowP++;
 									last;
   								}
@@ -1097,9 +1135,18 @@ foreach $device (@bom_list)
           )
 				{
 					$foundTO = 1;
-					$cover = 0;
+					#$cover = 0;
 					$length_SNail = 10;
 					print "			Bscan_Test  ", $DevTO[1],"\n";   #, $lineTO,"\n";
+			$power-> write($rowP, 4, "-", $format_data);
+			$power-> write($rowP, 5, "-", $format_data);
+			$power-> write($rowP, 6, "-", $format_data);
+			$power-> write($rowP, 7, "-", $format_data);
+			$power-> write($rowP, 8, "-", $format_data);
+			$power-> write($rowP, 9, "-", $format_data);
+			$power-> write($rowP, 10, "-", $format_data);
+			$power-> write($rowP, 11, "-", $format_data);
+			$power-> write($rowP, 12, "-", $format_data);
 
 				 		$testname = $DevTO[1];
 						open (TesP, "<testplan");											#### check testplan ####
@@ -1127,24 +1174,24 @@ foreach $device (@bom_list)
   									$testfile_last = $testfile;
 									$commentTP = "";
 								if (index($lineTP,"\!")> -1) {$commentTP = substr($lineTP,rindex($lineTP,"\!"));}   #TP comments
-								$coverage-> write($rowC, 4, 'V', $format_togg);				#Coverage
-								#$cover = $cover+1;
 
 									#print $lineTP,"\n";
 									#print $device,"\n";
 									$power-> write($rowP, 1, $lineTO, $format_anno);  				## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
+									
 									if(substr($lineTP,0,4) eq "test"){
+									$cover = 1;
+									$coverage-> write($rowC, 4, 'V', $format_togg);					#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno);  				## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
 									if(substr($lineTP,0,1) eq "\!"){
 									$PowerUT = $PowerUT + 1;
-									if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}			#Coverage
+									if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}		#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno1);  				## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
-									$cover = $cover+1;
 									###### hyperlink #####################################
 									$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');    	## hyperlink
 
