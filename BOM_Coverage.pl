@@ -1,16 +1,22 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v5.9>\n";
+print "  Bom Coverage ckecking tool for 3070 <v5.91>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
 print "\n*******************************************************************************\n";
 print "\n";
 
+#v5.90	152s
+#v5.91	143s handled components
+#v5.91	126s handled untestable
+#v5.91	93s  handled parallel
+
 #########################################################################################
 #print "  Checking In: ";
 use Term::ReadKey;
+use Time::HiRes qw(time);
 
 # system "stty -echo";
  ReadMode('noecho'); # Disable echoing of characters
@@ -213,6 +219,8 @@ print "  please specify BOM list file: ";
    $bom=<STDIN>;
    chomp $bom;
 
+$start_time = time();
+
 open (BOM, "< $bom");                      #read BOM list.
 
 print "\n";
@@ -235,6 +243,7 @@ open (Pin, "< pins") || open (Pin, "< 1%pins");
 		}
 	}
 close Pin;
+#$count = 0;
 
 foreach $device (@bom_list)
 {
@@ -265,6 +274,8 @@ foreach $device (@bom_list)
 	$len = 0;
 		while($lineTO = <TesO>)
 			{
+			#$count = $count+1;
+			#print $count."\n";
 			chomp($lineTO);
 			$lineTO =~ s/(^\s+|\s+$)//g; 					 #clear all spacing
 			@DevTO =  split('\"', $lineTO);
@@ -349,7 +360,11 @@ foreach $device (@bom_list)
 											if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
 											if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
 											$tested-> write($rowT, 5, $commentTP, $format_anno);  						## Comment ##
+											#@array = ($testname,substr($lineTF,0,8),$param[0],$param[1],$param[2],$commentTP);
+											#$array_ref = \@array;
+											#$tested-> write_row($rowT, 0, $array_ref, $format_data);
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
@@ -364,7 +379,11 @@ foreach $device (@bom_list)
 											if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
 											if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
 											$tested-> write($rowT, 5, $commentTP, $format_anno);  						## Comment ##
+											#@array = ($testname,substr($lineTF,0,9),$param[0],$param[1],$param[2],$commentTP);
+											#$array_ref = \@array;
+											#$tested-> write_row($rowT, 0, $array_ref, $format_data);
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
@@ -380,6 +399,7 @@ foreach $device (@bom_list)
 											if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
 											$tested-> write($rowT, 5, $commentTP, $format_anno);  						## Comment ##
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
@@ -432,6 +452,7 @@ foreach $device (@bom_list)
 											if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
 											$tested-> write($rowT, 5, $commentTP, $format_anno);  						## Comment ##
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
@@ -444,6 +465,7 @@ foreach $device (@bom_list)
 											if($OP == 0){$tested-> write($rowT, 3, $param[0], $format_data);	$tested-> write($rowT, 5, $commentTP, $format_anno);}  ## Excel ##
 											if($OP == 1){$tested-> write($rowT, 4, $param[0], $format_STP);	$tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
@@ -455,6 +477,7 @@ foreach $device (@bom_list)
 											$tested-> write($rowT, 3, $param[0], $format_data);
 											$tested-> write($rowT, 5, $commentTP, $format_anno);  ## Excel ##
 											$rowT++;
+											if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 											last; #goto Next_Dev;
 										}
 										elsif (eof)					  														####no parameter######
@@ -462,6 +485,7 @@ foreach $device (@bom_list)
 										$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
 										$untest-> write($rowU, 1, "No Test Parameter Found in TestFile.", $format_data);  	## Excel ##
 										$rowU++;
+										if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 										last;
 										}
   								}
@@ -479,6 +503,7 @@ foreach $device (@bom_list)
 									$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
 									$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
 									$rowU++;
+									if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
 									last;
 								}
 							elsif (eof and $foundTP == 0){
@@ -526,12 +551,36 @@ foreach $device (@bom_list)
 					$untest-> set_column(2, 2, $length_anno);
 				$rowU++;
 				close ALL;
+				if (($DevTO[1] =~ $device) and ($DevTO[0] =~ "capacitor|resistor|jumper") and (substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
+				# last;
+				}
+			################ parallel tested devices ######################################################################################
+			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
+				and substr($DevTO[1],0,length($device)) eq $device
+          and $nullTO > -1
+          and $comment1 > -1
+          and $comment2 > -1
+          and $powered == -1
+          and $scan == -1
+          and $digital == -1
+          and $mixed == -1
+          and $ver == -1
+          )
+				{
+					$foundTO = 1;
+					print "			Parallel_Test  ", $DevTO[1],"\n";		#, $lineTO,"\n";
+					$anno = substr($lineTO,rindex($lineTO,"\!")+1);
+					$anno =~ s/(^\s+|\s+$)//g; 
+					$coverage-> write($rowC, 1, 'L', $format_pin);			#Coverage
+					$limited-> write($rowL, 0, $DevTO[1], $format_data);	## Excel ##
+					$limited-> write($rowL, 1, $anno, $format_anno);		## Excel ##
+					$rowL++;
+					if (($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\%") and ($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) ne "\_")){goto Next_Dev;}
+					# last;
 				}
 			################ testable analog powered test #################################################################################
 			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
 				and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO == -1
-        #  and $skipTO == -1
           and $powered > -1
           and $scan == -1
           and $digital == -1
@@ -584,14 +633,12 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 1, $lineTO, $format_anno);		## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
 									if(substr($lineTP,0,4) eq "test"){
-
 									$cover = 1;
 									$coverage-> write($rowC, 3, 'V', $format_togg);			#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno);		## Excel ##
 									if (length($lineTP)	> $length_TP){$length_TP = length($lineTP); $power-> set_column(2, 2, $length_TP);}
 									}
 									if(substr($lineTP,0,1) eq "\!"){
-
 									$PowerUT = $PowerUT + 1;
 									if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
 									$power-> write($rowP, 2, $lineTP, $format_anno1);		## Excel ##
@@ -600,18 +647,6 @@ foreach $device (@bom_list)
 									$rowP++;
 									last;
   								}
-							# if ($DevTP[1] eq $testname	|substr($DevTP[1],7) eq $testname		#matching skipped test in TP
-							# 	and substr($DevTP[1],0,length($device)) eq $device	|substr($DevTP[1],7,length($device)) eq $device
-							# 	and substr($lineTP,0,1) eq "\!")
-							# 	{
-							# 		$foundTP = 1;
-  							# 		if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
-							# 		$untest-> write($rowU, 0, $testname, $format_data);  	## Excel ##
-							# 		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-							# 		$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
-							# 		$rowU++;
-							# 		last;
-							# 	}
 							elsif (eof and $foundTP == 0){
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
@@ -621,78 +656,9 @@ foreach $device (@bom_list)
 							}
 						close TesP;
 				}
-			################ parallel tested devices ######################################################################################
-			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-				and substr($DevTO[1],0,length($device)) eq $device
-          and $nullTO > -1
-          and $comment1 > -1
-          and $comment2 > -1
-          and $powered == -1
-          and $scan == -1
-          and $digital == -1
-          and $mixed == -1
-          and $ver == -1
-          )
-				{
-					$foundTO = 1;
-					print "			Parallel_Test  ", $DevTO[1],"\n";		#, $lineTO,"\n";
-					$anno = substr($lineTO,rindex($lineTO,"\!")+1);
-					$anno =~ s/(^\s+|\s+$)//g; 
-					$coverage-> write($rowC, 1, 'L', $format_pin);			#Coverage
-					$limited-> write($rowL, 0, $DevTO[1], $format_data);	## Excel ##
-					$limited-> write($rowL, 1, $anno, $format_anno);		## Excel ##
-					$rowL++;
-				}
-			################ multi-test(%)powered untestable device #######################################################################
-		#	elsif($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%"		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-		#		and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO > -1
-        #  || $skipTO > -1
-        #  and $powered > -1
-        #  and $scan == -1
-        #  and $digital == -1
-        #  and $mixed == -1
-        #  and $ver == -1
-        #  )
-		#		{
-		#		$foundTO = 1;
-		#		print "			Multi_UnTest(%)PWD  ", $DevTO[1],"\n";   #, $lineTO,"\n";
-		#		$device1 = "";
-		#		$device1 = $DevTO[1];
-		#		$untest-> write($rowU, 0, $device1, $format_data);  ## Excel ##
-		#		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-		#		#print $device1,"\n";
-		#		$UTline = "";
-		#		if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
-		#		open(ALL, "<analog/$device1")||open(ALL, "<analog/1%$device1") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
-		#		while($line = <ALL>)
-		#			{
-		#			if (index($line,$device1)>1){
-		#				$line = substr($line,6);
-		#				if (length($line)> $length_anno){$length_anno = length($line);}
-		#				$UTline = $line . $UTline;}
-		#			elsif (index($line,"not accessible")>1){
-		#				$line = substr($line,6);
-		#				if (length($line)> $length_anno){$length_anno = length($line);}
-		#				$UTline = $line . $UTline;}
-		#			elsif (index($line,"tested in file")>1){
-		#				$line = substr($line,6);
-		#				if (length($line)> $length_anno){$length_anno = length($line);}
-		#				$UTline = $line . $UTline;}
-		#			elsif (eof){
-		#				last;}
-		#			}
-		#			chomp($UTline);
-		#			$untest-> write($rowU, 2, $UTline, $format_anno);
-		#			$untest-> set_column(2, 2, $length_anno);
-		#			$rowU++;
-		#		close ALL;
-		#		}
 			################ testable digital test ########################################################################################
 			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
 			and substr($DevTO[1],0,length($device)) eq $device
-         # and $nullTO == -1
-         # and $skipTO == -1
           and $powered == -1
           and $scan == -1
           and $digital > -1
@@ -933,19 +899,6 @@ foreach $device (@bom_list)
 									$rowP++;
 									last;
   								}
-							# if ($DevTP[1] eq $testname	|substr($DevTP[1],8) eq $testname		#matching skipped test in TP
-							# 	and substr($DevTP[1],0,length($device)) eq $device	|substr($DevTP[1],8,length($device)) eq $device
-							# 	and substr($lineTP,0,1) eq "\!")
-							# 	{
-							# 		$foundTP = 1;
-							# 		#print substr($lineTP,0,1)."\n"; print $device, "\n";
-  							# 		if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}			#Coverage
-							# 		$untest-> write($rowU, 0, $testname, $format_data);		## Excel ##
-							# 		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-							# 		$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
-							# 		$rowU++;
-							# 		last;
-							# 	}
 							elsif (eof and $foundTP == 0){
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
@@ -955,64 +908,9 @@ foreach $device (@bom_list)
 							}
 						close TesP;
 				}
-			################ untestable digital test ######################################################################################
-		#	elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-		#	and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO > -1
-        #  || $skipTO > -1
-        #  and $powered == -1
-        #  and $scan == -1
-        #  and $digital > -1
-        #  and $mixed == -1
-        #  and $ver == -1
-        #  )
-		#		{
-		#			$foundTO = 1;
-		#			print "			Digital_UnTest  ", $DevTO[1],"\n";   #, $lineTO,"\n";
-		#			if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}			#Coverage
-		#			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 2, "Digital Test.", $format_anno);  ## Excel ##
-		#			$rowU++;
-		#		}
-			################ untestable analog powered test ###############################################################################
-		#	elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-		#	and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO > -1
-        #  || $skipTO > -1
-        #  and $powered > -1
-        #  and $scan == -1
-        #  and $digital == -1
-        #  and $mixed == -1
-        #  and $ver == -1
-        #  )
-		#		{
-		#			$foundTO = 1;
-		#			print "			ANA_PWD_UnTest  ", $DevTO[1],"\n";   #, $lineTO,"\n";
-		#			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-		#		$UTline = "";
-		#		if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
-		#		open(ALL, "<analog/$device")||open(ALL, "<analog/1%$device") or $untest-> write($rowU, 2, "!TestFile not found.", $format_anno); #print Nulltested "!TestFile not found.\n";
-		#		while($line = <ALL>)
-		#			{
-		#			if (index($line,"not accessible")>1){
-		#				$line = substr($line,6);
-		#				if (length($line)> $length_anno){$length_anno = length($line);}
-		#				$UTline = $line . $UTline;}
-		#			elsif (eof){last;}
-		#			}
-		#			chomp($UTline);
-		#			$untest-> write($rowU, 2, $UTline, $format_anno);
-		#			$untest-> set_column(2, 2, $length_anno);
-		#			$rowU++;
-		#			close ALL;
-		#		}
 			################ testable mixed device ########################################################################################
 			elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
 			and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO == -1
-        #  and $skipTO == -1
           and $powered == -1
           and $scan == -1
           and $digital == -1
@@ -1079,21 +977,6 @@ foreach $device (@bom_list)
 									$rowP++;
 									last;
   								}
-							# if ($DevTP[1] eq $testname	|substr($DevTP[1],6) eq $testname	#matching skipped test in TP
-							# 	and substr($DevTP[1],0,length($device)) eq $device	|substr($DevTP[1],6,length($device)) eq $device
-							# 	and substr($lineTP,0,1) eq "\!")
-							# 	{
-							# 		$foundTP = 1;
-							# 		#print Nulltested $lineTP, "\n";
-							# 		if ($testname eq $testname_last){last;}					#ignore duplicated test name
-  							# 		$testname_last = $testname;
-							# 		if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
-							# 		$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
-							# 		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-							# 		$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
-							# 		$rowU++;
-							# 		last;
-							# 	}
 							elsif (eof and $foundTP == 0){
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
@@ -1103,30 +986,9 @@ foreach $device (@bom_list)
 							}
 						close TesP;
 				}
-			################ untestable mixed device ######################################################################################
-		#	elsif($DevTO[1] eq $device		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\%")		|($DevTO[1] =~ $device and substr($DevTO[1],length($device),1) eq "\_")
-		#	and substr($DevTO[1],0,length($device)) eq $device
-		#   and $nullTO > -1
-		#   || $skipTO > -1
-		#   and $powered == -1
-		#   and $scan == -1
-		#   and $digital == -1
-		#   and $mixed > -1
-		#   and $ver == -1
-		#   )
-		#		{
-		#			$foundTO = 1;
-		#			print "			Mixed_UnTest  ", $DevTO[1],"\n";  #, $lineTO,"\n";
-		#			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}			#Coverage
-		#			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-		#			$rowU++;
-		#		}
 			################ testable Bscan device ########################################################################################
 			elsif(($DevTO[1] =~ $device and substr($DevTO[1],length($device),8) eq "\_connect")
 				and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO == -1
-        #  and $skipTO == -1
           and $powered == -1
           and $scan > -1
           and $digital == -1
@@ -1179,7 +1041,7 @@ foreach $device (@bom_list)
 									#print $device,"\n";
 									$power-> write($rowP, 1, $lineTO, $format_anno);  				## Excel ##
 									if (length($lineTO)	> $length_TO){$length_TO = length($lineTO); $power-> set_column(1, 1, $length_TO);}
-									
+
 									if(substr($lineTP,0,4) eq "test"){
 									$cover = 1;
 									$coverage-> write($rowC, 4, 'V', $format_togg);					#Coverage
@@ -1206,7 +1068,7 @@ foreach $device (@bom_list)
 									     	value    => 'Toggle_Test',
 									     	format   => $format_togg,
 									    });
-									    
+
 									$IC->conditional_formatting('A1:GR999',
 									    {
 									    	type     => 'text',
@@ -1217,7 +1079,7 @@ foreach $device (@bom_list)
 
 									if($length_SNail < 10){$length_SNail = 10;}
 									open (Boards, "< board");
-									while($lineDig = <Boards>)								
+									while($lineDig = <Boards>)
 									{
 										$lineDig =~ s/(^\s+|\s+$)//g;
 										#print $lineDig;
@@ -1342,21 +1204,6 @@ foreach $device (@bom_list)
 									$rowP++;
 									last;
   								}
-							# if ($DevTP[1] eq $testname	|substr($DevTP[1],8) eq $testname		#matching skipped test in TP
-							# 	and substr($DevTP[1],0,length($device)) eq $device	|substr($DevTP[1],8,length($device)) eq $device
-							# 	and substr($lineTP,0,1) eq "\!")
-							# 	{
-							# 		$foundTP = 1;
-							# 		#print Nulltested $lineTP, "\n";
-							# 		if ($testname eq $testname_last){last;}					#ignore duplicated test name
-  							# 		$testname_last = $testname;
-  							# 		if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}			#Coverage
-							# 		$untest-> write($rowU, 0, $testname, $format_data);  ## Excel ##
-							# 		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_STP);  ## Excel ##
-							# 		$untest-> write($rowU, 2, substr($lineTP,rindex($lineTP,"\!"),length($lineTP)- rindex($lineTP,"\!")), $format_anno);  ## Excel ##
-							# 		$rowU++;
-							# 		last;
-							# 	}
 							elsif (eof and $foundTP == 0){
 							$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 							$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_STP);  ## Excel ##
@@ -1366,26 +1213,6 @@ foreach $device (@bom_list)
 							}
 						close TesP;
 				}
-			################ untestable Bscan device ######################################################################################
-		#	elsif(($DevTO[1] =~ $device and substr($DevTO[1],length($device),8) eq "\_connect")
-		#		and substr($DevTO[1],0,length($device)) eq $device
-        #  and $nullTO > -1
-        #  || $skipTO > -1
-        #  and $powered == -1
-        #  and $scan > -1
-        #  and $digital == -1
-        #  and $mixed == -1
-        #  and $ver == -1
-        #  )
-		#		{
-		#			$foundTO = 1;
-		#			print "			Bscan_UnTest  ", $DevTO[1],"\n";   #, $lineTO,"\n";
-		#			if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}			#Coverage
-		#			$untest-> write($rowU, 0, substr($lineTO,index($lineTO,$device),index($lineTO,"\;")-index($lineTO,$device)-1), $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_data);  ## Excel ##
-		#			$untest-> write($rowU, 2, "Bscan Test.", $format_anno);  ## Excel ##
-		#			$rowU++;
-		#		}
       ################ reservation ########################################################################################################
       elsif (eof and $foundTO == 0)
       	{
@@ -1444,6 +1271,10 @@ $bom_coverage_report->close();
 print  "\n  >>> Completed ...\n";
 
 END_Prog:
+
+$end_time = time();
+$duration = $end_time - $start_time;
+printf "\n  runtime: %.4f Sec\n", $duration;
 
 print "\n";
 system 'pause';
