@@ -128,6 +128,7 @@ $row = 1; $col = 1;	$summary-> write($row, $col, '=COUNTA(Tested!A2:A9999)', $fo
 $row = 2; $col = 1;	$summary-> write($row, $col, '=COUNTA(Untest!A2:A9999)', $format_data);
 $row = 3; $col = 1;	$summary-> write($row, $col, '=COUNTA(LimitTest!A2:A9999)', $format_data);
 $row = 4; $col = 1;	$summary-> write($row, $col, '=COUNTA(PowerTest!A2:A9999)-B6', $format_data);
+$row = 5; $col = 1;	$summary-> write($row, $col, '=COUNTIF(PowerTest!C2:C99999,"Skipped - *")', $format_data);
 $row = 6; $col = 1;
 $summary-> write($row, $col, '=COUNTA(Shorts_Thres!A2:A9999)-COUNTIF(Shorts_Thres!A2:A9999,"!nodes *")', $format_data);
 
@@ -208,7 +209,6 @@ $rowP = 1;
 $length_anno = 8;
 $length_TO = 8;
 $length_TP = 8;
-$PowerUT = 0;
 
 print "  please specify BOM list file: ";
    $bom=<STDIN>;
@@ -680,7 +680,6 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
@@ -723,7 +722,6 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$device} eq "tested-dig" and substr($testplan{$device},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
@@ -779,7 +777,6 @@ foreach $device (@bom_list)
 									$DigPin[0] =~ s/(^\s+|\s+$)//g;
 									$DigPin[1] =~ s/(^\s+|\s+$)//g;
 									#print $DigPin[0]."\n";
-									#print uc($device)."\.".$DigPin[0],"\n";
 									if ($DigPin[1] =~ /(GND|GROUND)/){
 										if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_GND); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
 										if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1], $format_GND);
@@ -816,7 +813,6 @@ foreach $device (@bom_list)
 									else{
 										if (exists($bdg_list{uc($device)."\.".$DigPin[0]})){
 										#print uc($device)."\.".$DigPin[0],"\n";
-										#if($BDGDig[0] eq $device and $BDGDig[1] eq $DigPin[0] and $BDG[3] eq $DigPin[1])
 										if($bdg_list{uc($device)."\.".$DigPin[0]})
 											{
 											#print uc($device)."\.".$DigPin[0],"\n";
@@ -830,7 +826,6 @@ foreach $device (@bom_list)
 											}
 										else{
 											if(exists($hash_pin{$DigPin[1]})){
-											#print "---". uc($device)."\.".$DigPin[0],"\n";
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Contact_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
 											if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n* Contact_Test", $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
@@ -853,8 +848,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -921,7 +916,6 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
@@ -964,7 +958,6 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$device} eq "tested-bscan" and substr($testplan{$device},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
@@ -1071,8 +1064,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1441,7 +1434,6 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-pwr" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
@@ -1483,7 +1475,6 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
@@ -1575,7 +1566,6 @@ foreach $device (@bom_list)
 									else{
 										if (exists($bdg_list{uc($device)."\.".$DigPin[0]})){
 										#print uc($device)."\.".$DigPin[0],"\n";
-										#if($BDGDig[0] eq $device and $BDGDig[1] eq $DigPin[0] and $BDG[3] eq $DigPin[1])
 										if($bdg_list{uc($device)."\.".$DigPin[0]})
 											{
 											#print uc($device)."\.".$DigPin[0],"\n";
@@ -1589,7 +1579,6 @@ foreach $device (@bom_list)
 											}
 										else{
 											if(exists($hash_pin{$DigPin[1]})){
-											#print "---". uc($device)."\.".$DigPin[0],"\n";
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Contact_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
 											if ($DigPin[0] =~ /^\D/i){$IC-> write($DigPin[0], $DigPin[1]."\n* Contact_Test", $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1612,8 +1601,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1680,7 +1669,6 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-mix" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
@@ -1722,7 +1710,6 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				$PowerUT = $PowerUT + 1;
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
@@ -1829,8 +1816,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1917,7 +1904,6 @@ foreach $device (@bom_list)
 #print $testorder{$device},"\n";
 Next_Dev:
 }
-$row = 5; $col = 1;	$summary-> write($row, $col, $PowerUT, $format_data);
 
 ############################### shorts threshold statistic ################################################################################
 
