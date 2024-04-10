@@ -560,8 +560,8 @@ foreach $device (@bom_list)
 						$rowU++;
 						goto Next_Dev;
 						}}}
-	################ skipped devices ##############################################################################################
-	elsif (substr($testplan{$device},0,6) ne "tested"
+	################ testplan skipped devices ########################################################################################
+	elsif (substr($testplan{$device},0,7) eq "skipped"
 			and ($testorder{$device} eq "tested-res"
 			or $testorder{$device} eq "tested-cap"
 			or $testorder{$device} eq "tested-jmp"
@@ -580,7 +580,27 @@ foreach $device (@bom_list)
 			$rowU++;
 			next; #goto Next_Dev;
 		}
-	################ untestable devices ###########################################################################################
+	################ testplan inexistent devices #####################################################################################
+	elsif (substr($testplan{$device},0,6) eq ""
+			and ($testorder{$device} eq "tested-res"
+			or $testorder{$device} eq "tested-cap"
+			or $testorder{$device} eq "tested-jmp"
+			or $testorder{$device} eq "tested-dio"
+			or $testorder{$device} eq "tested-zen"
+			or $testorder{$device} eq "tested-ind"
+			or $testorder{$device} eq "tested-fuse")
+    		)
+		{
+			$foundTO = 1;
+			print "			Testplan InExistent	", $device,"\n";   #, $lineTO,"\n";
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}				#Coverage
+			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
+			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);					## Excel ##
+			$rowU++;
+			next; #goto Next_Dev;
+		}
+	################ testorder skipped devices #######################################################################################
 	elsif($testorder{$device} eq "untest-res"
 		or $testorder{$device} eq "untest-cap"
 		or $testorder{$device} eq "untest-jmp"
@@ -1313,8 +1333,8 @@ foreach $device (@bom_list)
 						$rowU++;
 						last; #goto Next_Dev;
 					}}}
-	#%%%%%%%%%%%%%%% skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	elsif (substr($testplan{$keysTO[$i]},0,6) ne "tested"
+	#%%%%%%%%%%%%%%% testplan skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	elsif (substr($testplan{$keysTO[$i]},0,7) eq "skipped"
 			and ($testorder{$keysTO[$i]} eq "tested-res"
 			or $testorder{$keysTO[$i]} eq "tested-cap"
 			or $testorder{$keysTO[$i]} eq "tested-jmp"
@@ -1333,7 +1353,27 @@ foreach $device (@bom_list)
 			$rowU++;
 			#last; #goto Next_Dev;
 		}
-	#%%%%%%%%%%%%%%% untestable devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testplan inexistent devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	elsif (substr($testplan{$keysTO[$i]},0,6) eq ""
+			and ($testorder{$keysTO[$i]} eq "tested-res"
+			or $testorder{$keysTO[$i]} eq "tested-cap"
+			or $testorder{$keysTO[$i]} eq "tested-jmp"
+			or $testorder{$keysTO[$i]} eq "tested-dio"
+			or $testorder{$keysTO[$i]} eq "tested-zen"
+			or $testorder{$keysTO[$i]} eq "tested-ind"
+			or $testorder{$keysTO[$i]} eq "tested-fuse")
+    		)
+		{
+			$foundTO = 1;
+			print "			Testplan InExistent	", $Mult_file,"\n";   #, $lineTO,"\n";
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}				#Coverage
+			$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
+			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
+			$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);				## Excel ##
+			$rowU++;
+			#last; #goto Next_Dev;
+		}
+	#%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif($testorder{$keysTO[$i]} eq "untest-res"
 		or $testorder{$keysTO[$i]} eq "untest-cap"
 		or $testorder{$keysTO[$i]} eq "untest-jmp"
