@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v5.99>\n";
+print "  Bom Coverage ckecking tool for 3070 <v6.0>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -35,6 +35,8 @@ use Time::HiRes qw(time);
 ############################ Excel ######################################################
 use Excel::Writer::XLSX;
 
+$currdir = `pwd`; chomp $currdir;
+
 my $bom_coverage_report = Excel::Writer::XLSX->new('BOM_Coverage_Report.xlsx');
 my $summary = $bom_coverage_report-> add_worksheet('Summary');
 my $coverage = $bom_coverage_report-> add_worksheet('Coverage');
@@ -48,7 +50,7 @@ $coverage-> freeze_panes(1,1);			#冻结行、列
 $tested-> freeze_panes(1,1);			#冻结行、列
 $untest-> freeze_panes(1,0);			#冻结行、列
 $limited-> freeze_panes(1,0);			#冻结行、列
-$power-> freeze_panes(1,0);				#冻结行、列
+$power-> freeze_panes(1,1);				#冻结行、列
 $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
@@ -59,12 +61,13 @@ $untest-> set_column(0,1,20);			#设置列宽
 $untest-> set_column(1,2,40);			#设置列宽
 $limited-> set_column(0,1,20);			#设置列宽
 $limited-> set_column(1,1,30);			#设置列宽
-$power-> set_column(0,1,20);			#设置列宽
+$power-> set_column(0,1,15);			#设置列宽
 $power-> set_column(1,3,30);			#设置列宽
 $power-> set_column(4,12,15);			#设置列宽
 $short_thres-> set_column(0,1,40);		#设置列宽
 
 $summary-> activate();					#设置初始可见
+$bom_coverage_report->set_size(1680, 1180);	#设置初始窗口尺寸
 
 #新建一个格式
 $format_item = $bom_coverage_report-> add_format(bold=>1, align=>'center', valign=>'vcenter', border=>1, size=>12, bg_color=>'cyan');
@@ -82,62 +85,65 @@ $format_STP  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcent
 $format_hylk = $bom_coverage_report-> add_format(color=>'blue', align=>'center', valign=>'vcenter', border=>1, underline=>1);
 $format_FPY  = $bom_coverage_report-> add_format(align=>'center', valign=>'vcenter', border=>1, num_format=> '10');
 
-$row = 0; $col = 0;	$tested-> write($row, $col, '<Device>', $format_head);
-$row = 0; $col = 1;	$tested-> write($row, $col, '<TYPE>', $format_head);
-$row = 0; $col = 2;	$tested-> write($row, $col, '<Nominal>', $format_head);
-$row = 0; $col = 3;	$tested-> write($row, $col, '<HiLimit>', $format_head);
-$row = 0; $col = 4;	$tested-> write($row, $col, '<LoLimit>', $format_head);
-$row = 0; $col = 5;	$tested-> write($row, $col, '<Comments>', $format_head);
+$tested-> write("A1", '<Items>', $format_head);
+$tested-> write("B1", '<TYPE>', $format_head);
+$tested-> write("C1", '<Nominal>', $format_head);
+$tested-> write("D1", '<HiLimit>', $format_head);
+$tested-> write("E1", '<LoLimit>', $format_head);
+$tested-> write("F1", '<Comments>', $format_head);
 
-$row = 0; $col = 0;	$untest-> write($row, $col, '<Device>', $format_head);
-$row = 0; $col = 1;	$untest-> write($row, $col, '<Justification>', $format_head);
-$row = 0; $col = 2;	$untest-> write($row, $col, '<Comments>', $format_head);
+$untest-> write("A1", '<Items>', $format_head);
+$untest-> write("B1", '<Justification>', $format_head);
+$untest-> write("C1", '<Comments>', $format_head);
 
-$row = 0; $col = 0;	$limited-> write($row, $col, '<Device>', $format_head);
-$row = 0; $col = 1;	$limited-> write($row, $col, '<Comments>', $format_head);
+$limited-> write("A1", '<Items>', $format_head);
+$limited-> write("B1", '<Comments>', $format_head);
 
-$row = 0; $col = 0;	$power-> write($row, $col, '<Device>', $format_head);
-$row = 0; $col = 1;	$power-> write($row, $col, '<TestOrder>', $format_head);
-$row = 0; $col = 2;	$power-> write($row, $col, '<TestPlan>', $format_head);
-$row = 0; $col = 3;	$power-> write($row, $col, '<Family>', $format_head);
-$row = 0; $col = 4;	$power-> write($row, $col, '<Total Pin>', $format_item);
-$row = 0; $col = 5;	$power-> write($row, $col, '<Power Pin>', $format_VCC);
-$row = 0; $col = 6;	$power-> write($row, $col, '<GND Pin>', $format_GND);
-$row = 0; $col = 7;	$power-> write($row, $col, '<Toggle Test Pin>', $format_togg);
-$row = 0; $col = 8;	$power-> write($row, $col, '<Pin Test>', $format_pin);
-$row = 0; $col = 9;	$power-> write($row, $col, '<NC Pin>', $format_NC);
-$row = 0; $col = 10;	$power-> write($row, $col, '<Untest Pin>', $format_data);
-$row = 0; $col = 11;	$power-> write($row, $col, '<Toggle Coverage>', $format_togg);
-$row = 0; $col = 12;	$power-> write($row, $col, '<Pin Coverage>', $format_pin);
+$power-> write("A1", '<Items>', $format_head);
+$power-> write("B1", '<TestOrder>', $format_head);
+$power-> write("C1", '<TestPlan>', $format_head);
+$power-> write("D1", '<Family>', $format_head);
+$power-> write("E1", '<Total Pin>', $format_item);
+$power-> write("F1", '<Power Pin>', $format_VCC);
+$power-> write("G1", '<GND Pin>', $format_GND);
+$power-> write("H1", '<Toggle Test Pin>', $format_togg);
+$power-> write("I1", '<Pin Test>', $format_pin);
+$power-> write("J1", '<NC Pin>', $format_NC);
+$power-> write("K1", '<Untest Pin>', $format_data);
+$power-> write("L1", '<Toggle Coverage>', $format_togg);
+$power-> write("M1", '<Pin Coverage>', $format_pin);
 
-$row = 0; $col = 0;	$short_thres-> write($row, $col, 'Nodes', $format_head);
-$row = 0; $col = 1;	$short_thres-> write($row, $col, 'Threshold', $format_head);
+$short_thres-> write("A1", 'Nodes', $format_head);
+$short_thres-> write("B1", 'Threshold', $format_head);
 
-$row = 0; $col = 0;	$summary-> write($row, $col, 'Test Items', $format_head);
-$row = 0; $col = 1;	$summary-> write($row, $col, 'Quantity', $format_head);
-$row = 0; $col = 2;	$summary-> write($row, $col, 'Percentage', $format_head);
+$summary-> write("A1", 'Test Items', $format_head);
+$summary-> write("B1", 'Quantity', $format_head);
+$summary-> write("C1", 'Percentage', $format_head);
 
-$row = 1; $col = 0;	$summary-> write($row, $col, 'Tested', $format_item);
-$row = 2; $col = 0;	$summary-> write($row, $col, 'Untest', $format_item);
-$row = 3; $col = 0;	$summary-> write($row, $col, 'LimitTest', $format_item);
-$row = 4; $col = 0;	$summary-> write($row, $col, 'Power-Tested', $format_item);
-$row = 5; $col = 0;	$summary-> write($row, $col, 'Power-UnTest', $format_item);
-$row = 6; $col = 0;	$summary-> write($row, $col, 'Node accessibility rate', $format_item);
+$summary-> write("A2", 'Tested', $format_item);
+$summary-> write("A3", 'Untest', $format_item);
+$summary-> write("A4", 'LimitTest', $format_item);
+$summary-> write("A5", 'Power-Tested', $format_item);
+$summary-> write("A6", 'Power-UnTest', $format_item);
+$summary-> write("A7", 'Node accessibility rate', $format_item);
 
-$row = 1; $col = 1;	$summary-> write($row, $col, '=COUNTA(Tested!A2:A9999)', $format_data);
-$row = 2; $col = 1;	$summary-> write($row, $col, '=COUNTA(Untest!A2:A9999)', $format_data);
-$row = 3; $col = 1;	$summary-> write($row, $col, '=COUNTA(LimitTest!A2:A9999)', $format_data);
-$row = 4; $col = 1;	$summary-> write($row, $col, '=COUNTA(PowerTest!A2:A9999)-B6', $format_data);
-$row = 5; $col = 1;	$summary-> write($row, $col, '=COUNTIF(PowerTest!C2:C99999,"Skipped - *")', $format_data);
-$row = 6; $col = 1;
-$summary-> write($row, $col, '=COUNTA(Shorts_Thres!A2:A9999)-COUNTIF(Shorts_Thres!A2:A9999,"!nodes *")', $format_data);
+$summary-> write("B2", '=COUNTA(Tested!A2:A9999)', $format_data);
+$summary-> write("B3", '=COUNTA(Untest!A2:A9999)', $format_data);
+$summary-> write("B4", '=COUNTA(LimitTest!A2:A9999)', $format_data);
+$summary-> write("B5", '=COUNTA(PowerTest!A2:A9999)-B6', $format_data);
+$summary-> write("B6", '=COUNTIF(PowerTest!C2:C99999,"Skipped - *")', $format_data);
+$summary-> write("B7", '=COUNTA(Shorts_Thres!A2:A9999)-COUNTIF(Shorts_Thres!A2:A9999,"!nodes *")', $format_data);
 
-$row = 1; $col = 2;	$summary-> write_formula($row, $col, "=(B2/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$row = 2; $col = 2;	$summary-> write_formula($row, $col, "=(B3/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$row = 3; $col = 2;	$summary-> write_formula($row, $col, "=(B4/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$row = 4; $col = 2;	$summary-> write_formula($row, $col, "=(B5/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$row = 5; $col = 2;	$summary-> write_formula($row, $col, "=(B6/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$row = 6; $col = 2;	$summary-> write_formula($row, $col, "=(B7/COUNTA(Shorts_Thres!A2:A9999))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C2", "=(B2/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C3", "=(B3/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C4", "=(B4/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C5", "=(B5/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C6", "=(B6/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C7", "=(B7/COUNTA(Shorts_Thres!A2:A9999))", $format_PCT);  #输出Percentage
+
+$summary-> write("A38", $currdir);
+$summary-> write("A39", '* please update JTAG/Compliance pin coverage manually.');
+$summary-> write("A40", '* please scrutinize digital pin coverage.');
 
 $tested-> write("H2", 'Type', $format_item);
 $tested-> write("H3", 'Count', $format_item);
@@ -154,12 +160,12 @@ $tested-> write_formula("L3", '=COUNTIF(B2:B99999,"Jumper")', $format_data);
 $tested-> write_formula("M3", '=COUNTIF(B2:B99999,"Diode")', $format_data);
 $tested-> write_formula("N3", '=COUNTIF(B2:B99999,"Zener")', $format_data);
 
-$row = 0; $col = 0;	$coverage-> write($row, $col, ' Test Items', $format_head);
-$row = 0; $col = 1;	$coverage-> write($row, $col, ' L, C, R, D, Z, J test', $format_head);
-$row = 0; $col = 2;	$coverage-> write($row, $col, ' Digital logic test', $format_head);
-$row = 0; $col = 3;	$coverage-> write($row, $col, ' Analog function test', $format_head);
-$row = 0; $col = 4;	$coverage-> write($row, $col, ' Bscan test', $format_head);
-$row = 0; $col = 5;	$coverage-> write($row, $col, ' No coverage', $format_head);
+$coverage-> write("A1", ' Device', $format_head);
+$coverage-> write("B1", ' L, C, R, D, Z, J test', $format_head);
+$coverage-> write("C1", ' Digital logic test', $format_head);
+$coverage-> write("D1", ' Analog function test', $format_head);
+$coverage-> write("E1", ' Bscan test', $format_head);
+$coverage-> write("F1", ' No coverage', $format_head);
 
 $power-> conditional_formatting('H2:H9999',
     {
@@ -868,8 +874,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1084,8 +1090,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1641,8 +1647,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
@@ -1856,8 +1862,8 @@ foreach $device (@bom_list)
 									$power-> write($rowP, 4, $Total_Pin, $format_item);
 									$power-> write($rowP, 5, $Power_Pin, $format_VCC);
 									$power-> write($rowP, 6, $GND_Pin, $format_GND);
-									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "* Toggle_Test*")', $format_data);
-									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "* Contact_Test*")', $format_data);
+									$power-> write_formula($rowP, 7, '=COUNTIF('.$device.'!A1:GR999, "*Toggle_Test*")', $format_data);
+									$power-> write_formula($rowP, 8, '=COUNTIF('.$device.'!A1:GR999, "*Contact_Test*")', $format_data);
 									$power-> write($rowP, 9, $NC_Pin, $format_NC);
 									$power-> write_formula($rowP, 10, "=(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-H".($rowP+1)."-I".($rowP+1)."-J".($rowP+1).")", $format_data);
 									$power-> write_formula($rowP, 11, "=(H".($rowP+1)."/(E".($rowP+1)."-F".($rowP+1)."-G".($rowP+1)."-J".($rowP+1)."))", $format_FPY);
