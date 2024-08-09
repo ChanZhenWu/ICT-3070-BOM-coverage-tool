@@ -168,6 +168,30 @@ $coverage-> write("D1", ' Analog function test', $format_head);
 $coverage-> write("E1", ' Bscan test', $format_head);
 $coverage-> write("F1", ' No coverage', $format_head);
 
+$coverage->conditional_formatting('B2:F99999',
+	{
+		type     => 'text',
+	 	criteria => 'containing',
+	 	value    => 'V',
+	 	format   => $format_togg,
+	});
+
+$coverage->conditional_formatting('B2:F99999',
+	{
+		type     => 'text',
+	 	criteria => 'containing',
+	 	value    => 'L',
+	 	format   => $format_pin,
+	});
+
+$coverage->conditional_formatting('B2:F99999',
+	{
+		type     => 'text',
+	 	criteria => 'containing',
+	 	value    => 'N',
+	 	format   => $format_NC,
+	});
+
 $power-> conditional_formatting('H2:H9999',
     {
     	type     => 'cell',
@@ -428,7 +452,7 @@ foreach $device (@bom_list)
 				$tested-> write_row($rowT, 2, $array_ref, $format_data);
 		
 			$UNCover = 1;
-			$coverage-> write($rowC, 1, 'V', $format_togg);			#Coverage
+			$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 
 				open(SourceFile, "<analog/$device")||open(SourceFile, "<analog/1%$device");
 					while($lineTF = <SourceFile>)							#read parameter
@@ -583,7 +607,7 @@ foreach $device (@bom_list)
 		{
 			$foundTO = 1;
 			print "			General SkipTest	", $device,"\n";   #, $lineTO,"\n";
-			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
 			$untest-> write($rowU, 0, $device, $format_data);		## Excel ##
 			$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  ## Excel ##
 			$untest-> write($rowU, 2, substr($testplan{$device},8), $format_anno);  ## Excel ##
@@ -603,7 +627,7 @@ foreach $device (@bom_list)
 		{
 			$foundTO = 1;
 			print "			Testplan InExistent	", $device,"\n";   #, $lineTO,"\n";
-			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}				#Coverage
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
 			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
 			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
 			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);					## Excel ##
@@ -627,7 +651,7 @@ foreach $device (@bom_list)
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
 		open(ALL, "<analog/$device") || open(ALL, "<analog/1%$device") || $untest-> write($rowU, 2, "!TestFile not found.", $format_anno1);
 		while($line = <ALL>)
 			{
@@ -662,7 +686,7 @@ foreach $device (@bom_list)
 			$foundTO = 1;
 			print "			General ParalTest	", $device,"\n";		#, $lineTO,"\n";
 			
-			if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_pin);}			#Coverage
+			if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}			#Coverage
 			$limited-> write($rowL, 0, $device, $format_data);		## Excel ##
 			#$limited-> write($rowL, 1, $dev[2], $format_anno);		## Excel ##
 		$UTline = "";
@@ -698,7 +722,7 @@ foreach $device (@bom_list)
 
 			if($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -710,7 +734,7 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -722,14 +746,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "untest-pwr"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$device} eq "tested-pwr"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
@@ -747,12 +771,12 @@ foreach $device (@bom_list)
 			
 			if($testorder{$device} eq "tested-dig" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 2, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$device} eq "tested-dig" and substr($testplan{$device},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
@@ -911,14 +935,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "untest-dig"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$device} eq "tested-dig"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
@@ -934,7 +958,7 @@ foreach $device (@bom_list)
 			
 			if($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -946,7 +970,7 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -958,14 +982,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "untest-mix"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$device} eq "tested-mix"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
@@ -983,12 +1007,12 @@ foreach $device (@bom_list)
 			
 			if($testorder{$device} eq "tested-bscan" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 4, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$device} eq "tested-bscan" and substr($testplan{$device},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
@@ -1148,14 +1172,14 @@ foreach $device (@bom_list)
 				$rowP++;
   				}
 			elsif($testorder{$device} eq "untest-bscan"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$device} eq "tested-bscan"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
@@ -1200,7 +1224,7 @@ foreach $device (@bom_list)
 				$tested-> write_row($rowT, 2, $array_ref, $format_data);
 				
 				$UNCover = 1;	
-				$coverage-> write($rowC, 1, 'V', $format_togg);			#Coverage
+				$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 
 				open(SourceFile, "<analog/$Mult_file")||open(SourceFile, "<analog/1%$Mult_file");
 					while($lineTF = <SourceFile>)							#read parameter
@@ -1356,7 +1380,7 @@ foreach $device (@bom_list)
 		{
 			$foundTO = 1;
 			print "			Multiple SkipTest	", $Mult_file,"\n";   #, $lineTO,"\n";
-			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
 			$untest-> write($rowU, 0, $Mult_file, $format_data);		## Excel ##
 			$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  ## Excel ##
 			$untest-> write($rowU, 2, substr($testplan{$Mult_file},8), $format_anno);  ## Excel ##
@@ -1376,7 +1400,7 @@ foreach $device (@bom_list)
 		{
 			$foundTO = 1;
 			print "			Testplan InExistent	", $Mult_file,"\n";   #, $lineTO,"\n";
-			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}				#Coverage
+			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
 			$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
 			$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);				## Excel ##
@@ -1400,7 +1424,7 @@ foreach $device (@bom_list)
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_NC);}			#Coverage
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
 		open(ALL, "<analog/$Mult_file") || open(ALL, "<analog/1%$Mult_file") || $untest-> write($rowU, 2, "!TestFile not found.", $format_anno1);
 		while($line = <ALL>)
 			{
@@ -1435,7 +1459,7 @@ foreach $device (@bom_list)
 			$foundTO = 1;
 			print "			Multiple ParalTest	", $Mult_file,"\n";		#, $lineTO,"\n";
 			
-			if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_pin);}			#Coverage
+			if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}			#Coverage
 			$limited-> write($rowL, 0, $Mult_file, $format_data);		## Excel ##
 			#$limited-> write($rowL, 1, $dev[2], $format_anno);			## Excel ##
 		$UTline = "";
@@ -1472,7 +1496,7 @@ foreach $device (@bom_list)
 			
 			if($testorder{$Mult_file} eq "tested-pwr" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -1484,7 +1508,7 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-pwr" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -1496,14 +1520,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-pwr"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-pwr"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
@@ -1520,12 +1544,12 @@ foreach $device (@bom_list)
 			
 			if($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 2, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
@@ -1684,14 +1708,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-dig"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-dig"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
@@ -1707,7 +1731,7 @@ foreach $device (@bom_list)
 			
 			if($testorder{$Mult_file} eq "tested-mix" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -1719,7 +1743,7 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-mix" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
 
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -1731,14 +1755,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-mix"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-mix"){
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
@@ -1755,12 +1779,12 @@ foreach $device (@bom_list)
 			
 			if($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
-				$coverage-> write($rowC, 4, 'V', $format_togg);								#Coverage
+				$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,7) eq "skipped"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
@@ -1920,14 +1944,14 @@ foreach $device (@bom_list)
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-bscan"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-bscan"){
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_NC);}					#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
 				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
@@ -1943,7 +1967,7 @@ foreach $device (@bom_list)
 	{
 		#print $foundTO,"--5--","\n";
 		print "			NO Test Found		$device\n"; 
-			$coverage-> write($rowC, 5, 'N', $format_NC);			#Coverage
+			$coverage-> write($rowC, 5, 'N', $format_data);		#Coverage
 			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 			$untest-> write($rowU, 1, "NO test item found in TestOrder.", $format_anno);  ## Excel ##
 			$untest-> write($rowU, 2, "Check TJ/SP testing.", $format_anno);  ## Excel ##
