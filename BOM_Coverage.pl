@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v6.0>\n";
+print "  Bom Coverage ckecking tool for 3070 <v6.1>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -12,6 +12,7 @@ print "\n";
 #print "  Checking In: ";
 use Term::ReadKey;
 use Time::HiRes qw(time);
+use List::Util 'uniq';
 
 # system "stty -echo";
  ReadMode('noecho'); # Disable echoing of characters
@@ -237,6 +238,7 @@ open (Bom, "< $bom");
 close Bom;
 print "[DONE]\n";
 
+@bom_list = uniq @bom_list;
 $length = scalar @bom_list;
 print "	bom: ", $length,"\n";
 
@@ -300,6 +302,8 @@ open (TO, "< testorder");
 		$dev[0] =~ s/(^\s+|\s+$)//g;
 		$dev[1] =~ s/(^\s+|\s+$)//g;
 		$dev[2] = substr($dev[2],1); $dev[2] =~ s/(^\s+|\s+$)//g;
+		next if ($dev[2] =~ "version");
+
 		if ($dev[0] eq "test resistor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-res'}
 		if ($dev[0] eq "test capacitor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-cap'}
 		if ($dev[0] eq "test jumper" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-jmp'}
