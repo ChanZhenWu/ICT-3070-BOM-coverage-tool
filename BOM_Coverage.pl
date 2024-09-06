@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v6.8>\n";
+print "  Bom Coverage ckecking tool for 3070 <v6.9>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -45,7 +45,7 @@ my $tested = $bom_coverage_report-> add_worksheet('Tested');
 my $untest = $bom_coverage_report-> add_worksheet('Untest');
 my $limited = $bom_coverage_report-> add_worksheet('LimitTest');
 my $power = $bom_coverage_report-> add_worksheet('PowerTest');
-my $short_thres = $bom_coverage_report-> add_worksheet('Shorts_Thres');
+my $short_thres = $bom_coverage_report-> add_worksheet('Shorts_Setting');
 
 $coverage-> freeze_panes(1,1);			#冻结行、列
 $tested-> freeze_panes(1,1);			#冻结行、列
@@ -65,7 +65,7 @@ $limited-> set_column(1,1,30);			#设置列宽
 $power-> set_column(0,1,15);			#设置列宽
 $power-> set_column(1,3,30);			#设置列宽
 $power-> set_column(4,12,15);			#设置列宽
-$short_thres-> set_column(0,1,40);		#设置列宽
+$short_thres-> set_column(0,2,40);		#设置列宽
 
 $summary-> activate();					#设置初始可见
 $bom_coverage_report->set_size(1680, 1180);	#设置初始窗口尺寸
@@ -116,6 +116,7 @@ $power-> write("M1", '<Pin Coverage>', $format_pin);
 
 $short_thres-> write("A1", 'Nodes', $format_head);
 $short_thres-> write("B1", 'Threshold', $format_head);
+$short_thres-> write("C1", 'Delay', $format_head);
 
 $summary-> write("A1", 'Test Items', $format_head);
 $summary-> write("B1", 'Quantity', $format_head);
@@ -133,14 +134,14 @@ $summary-> write("B3", '=COUNTA(Untest!A2:A9999)', $format_data);
 $summary-> write("B4", '=COUNTA(LimitTest!A2:A9999)', $format_data);
 $summary-> write("B5", '=COUNTA(PowerTest!A2:A9999)-B6', $format_data);
 $summary-> write("B6", '=COUNTIF(PowerTest!C2:C99999,"Skipped - *")', $format_data);
-$summary-> write("B7", '=COUNTA(Shorts_Thres!A2:A9999)-COUNTIF(Shorts_Thres!A2:A9999,"!nodes *")', $format_data);
+$summary-> write("B7", '=COUNTA(Shorts_Setting!A2:A9999)-COUNTIF(Shorts_Setting!A2:A9999,"!nodes *")', $format_data);
 
 $summary-> write_formula("C2", "=(B2/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C3", "=(B3/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C4", "=(B4/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C5", "=(B5/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C6", "=(B6/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
-$summary-> write_formula("C7", "=(B7/COUNTA(Shorts_Thres!A2:A9999))", $format_PCT);  #输出Percentage
+$summary-> write_formula("C7", "=(B7/COUNTA(Shorts_Setting!A2:A9999))", $format_PCT);  #输出Percentage
 
 $summary-> write("A38", $currdir);
 $summary-> write("A39", '* please update JTAG/Compliance pin coverage manually.');
@@ -197,7 +198,7 @@ $power-> conditional_formatting('H2:H9999',
     	type     => 'cell',
      	criteria => 'between',
      	minimum  => 0.001,
-     	maximum  => 999,
+     	maximum  => 9999,
      	format   => $format_togg,
     });
 $power-> conditional_formatting('L2:L9999',
@@ -205,7 +206,7 @@ $power-> conditional_formatting('L2:L9999',
     	type     => 'cell',
      	criteria => 'between',
      	minimum  => 0.001,
-     	maximum  => 999,
+     	maximum  => 9999,
      	format   => $format_togg,
     });
 
@@ -214,7 +215,7 @@ $power-> conditional_formatting('I2:I9999',
     	type     => 'cell',
      	criteria => 'between',
      	minimum  => 0.001,
-     	maximum  => 999,
+     	maximum  => 9999,
      	format   => $format_pin,
     });
 $power-> conditional_formatting('M2:M9999',
@@ -222,7 +223,7 @@ $power-> conditional_formatting('M2:M9999',
     	type     => 'cell',
      	criteria => 'between',
      	minimum  => 0.001,
-     	maximum  => 999,
+     	maximum  => 9999,
      	format   => $format_pin,
     });
 
@@ -469,6 +470,7 @@ foreach $device (@bom_list)
 	$GND_Pin = 0;
 	$Toggle_Pin = 0;
 	$NC_Pin = 0;
+	$rowP_ori = $rowP;
 	#-------------------------------------------------------------------------------------
 	$worksheet = 0;
 	$foundTO = 0;
@@ -818,7 +820,6 @@ foreach $device (@bom_list)
 					$rowT++;
 				}
 		}
-		#print $row_ver,$rowT."\n";
 		if ($rowT - $row_ver > 1){$tested-> merge_range($row_ver, 0, $rowT-1, 0, $device, $format_item);}
 		}
 
@@ -946,7 +947,6 @@ foreach $device (@bom_list)
        )
 		{
 			$foundTO = 0;
-			$rowP_ori = $rowP;
 			print "			General PwrTest		", $device,"\n";   #, $lineTO,"\n";
 
 			if($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,6) eq "tested"){
@@ -1061,15 +1061,12 @@ foreach $device (@bom_list)
 					}
 				}
 		}
-		#print $rowP_ver,$rowP."\n";
-		if ($rowP - $rowP_ver > 0){$power-> merge_range($rowP_ver, 0, $rowP-1, 0, $device, $format_data);}
 		
 	################ testable digital test ########################################################################################
 	if($testorder{$device} eq "tested-dig" or $testorder{$device} eq "untest-dig"
        )
 		{
 			$foundTO = 0;
-			$rowP_ori = $rowP;
 			$length_DigPin = 10;
 			print "			General DigiTest	", $device,"\n";   #, $lineTO,"\n";
 			
@@ -1334,16 +1331,12 @@ foreach $device (@bom_list)
 					}
 				}
 		}
-		#print $rowD_ver,$rowP."\n";
-		#if (substr($testorder{$device},7,3) eq "dig"  or substr($testorder{$versions[0]."+".$device},7,3) eq "dig"){
-			#if ($rowP - $rowD_ver > 0){$power-> merge_range($rowD_ver-1, 0, $rowP-1, 0, $device, $format_hylk);}#}
 		
 	################ testable mixed test ##########################################################################################
 	if($testorder{$device} eq "tested-mix" or $testorder{$device} eq "untest-mix"
        )
 		{
 			$foundTO = 0;
-			$rowP_ori = $rowP;
 			print "			General MixTest		", $device,"\n";   #, $lineTO,"\n";
 			
 			if($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,6) eq "tested"){
@@ -1392,7 +1385,6 @@ foreach $device (@bom_list)
        )
 		{
 			$foundTO = 0;
-			$rowP_ori = $rowP;
 			$length_SNail = 10;
 			print "			General BscTest	", $device,"\n";   #, $lineTO,"\n";
 			
@@ -2541,7 +2533,7 @@ foreach $device (@bom_list)
 #print $testorder{$device},"\n";
 Next_Dev:
 #print $device.$rowP."	".$rowP_ori."\n";
-if ($rowP - $rowP_ori > 1 and $testorder{$device} =~ /tested-dig|tested-bscan|untest-dig|untest-bscan/){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
+if ($rowP - $rowP_ori > 1){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
 }
 
 ############################### shorts threshold statistic ################################################################################
@@ -2561,15 +2553,23 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 				if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
 				$thres =~ s/(^\s+|\s+$)//g;                     #clear all spacing
 			}
+		if ($nodes =~ "delay") 
+			{
+				$delay = substr($nodes, index($nodes,"delay")+6);
+				#if ($nodes =~ "\!"){$delay = substr($nodes, 10, index($nodes,"\!")-10);}
+				$delay =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+			}
 		if ($nodes =~ "nodes")
 		{
 			if(substr($nodes,0,1) eq "!"){
 			$short_thres-> write($node, 0, substr($nodes, 0, rindex($nodes,"!")), $format_data);  ## Nodes ##
 			$short_thres-> write($node, 1, substr($nodes, rindex($nodes,"!")), $format_data);  ## Thres ##
+			$short_thres-> write($node, 2, "-", $format_data);  ## Delay ##
 				}
 			elsif(substr($nodes,0,5) eq "nodes"){
 			$short_thres-> write($node, 0, $nodes, $format_data);  ## Nodes ##
 			$short_thres-> write($node, 1, $thres, $format_data);  ## Thres ##
+			$short_thres-> write($node, 2, $delay, $format_data);  ## Delay ##
 				}
 			$node++;
 			#print $nodes."\n";
