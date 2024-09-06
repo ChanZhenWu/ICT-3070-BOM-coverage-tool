@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v6.6>\n";
+print "  Bom Coverage ckecking tool for 3070 <v6.8>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -195,30 +195,34 @@ $coverage->conditional_formatting('B2:F99999',
 $power-> conditional_formatting('H2:H9999',
     {
     	type     => 'cell',
-     	criteria => 'greater than',
-     	value    => 0,
+     	criteria => 'between',
+     	minimum  => 0.001,
+     	maximum  => 999,
      	format   => $format_togg,
     });
 $power-> conditional_formatting('L2:L9999',
     {
     	type     => 'cell',
-     	criteria => 'greater than',
-     	value    => 0,
+     	criteria => 'between',
+     	minimum  => 0.001,
+     	maximum  => 999,
      	format   => $format_togg,
     });
 
 $power-> conditional_formatting('I2:I9999',
     {
     	type     => 'cell',
-     	criteria => 'greater than',
-     	value    => 0,
+     	criteria => 'between',
+     	minimum  => 0.001,
+     	maximum  => 999,
      	format   => $format_pin,
     });
 $power-> conditional_formatting('M2:M9999',
     {
     	type     => 'cell',
-     	criteria => 'greater than',
-     	value    => 0,
+     	criteria => 'between',
+     	minimum  => 0.001,
+     	maximum  => 999,
      	format   => $format_pin,
     });
 
@@ -453,6 +457,8 @@ $sizeTP = @keysTP;
 print "	testplan: ".$sizeTP."\n";
 $row_ver = 0;
 $rowP_ver = 0;
+$rowD_ver = 0;
+
 
 ##########################################################################################
 print "\n";
@@ -940,26 +946,29 @@ foreach $device (@bom_list)
        )
 		{
 			$foundTO = 0;
+			$rowP_ori = $rowP;
 			print "			General PwrTest		", $device,"\n";   #, $lineTO,"\n";
 
-			@array = ("-","-","-","-","-","-","-","-","-","-");
-			$array_ref = \@array;
-			$power-> write_row($rowP, 3, $array_ref, $format_data);
-			
 			if($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
 				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
+			@array = ("-","-","-","-","-","-","-","-","-","-");
+			$array_ref = \@array;
+			$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+					$array_ref = \@array;
+					$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
 				$rowP++;
 				}
@@ -1000,7 +1009,7 @@ foreach $device (@bom_list)
 					$cover = 1; $base = 1;
 					$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 					$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno);	## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno);	## Excel ##
 					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 					$rowP++;
 					}
@@ -1009,7 +1018,7 @@ foreach $device (@bom_list)
 					print $device."\n"; $base = 1;
 					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
 					$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno);					## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno);					## Excel ##
 					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
 					$rowP++;
 					}
@@ -1018,7 +1027,7 @@ foreach $device (@bom_list)
 					print $device."\n"; $base = 1;
 					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
 					$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno1);	## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno1);	## Excel ##
 					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
 					$rowP++;
 					}
@@ -1060,30 +1069,30 @@ foreach $device (@bom_list)
        )
 		{
 			$foundTO = 0;
+			$rowP_ori = $rowP;
 			$length_DigPin = 10;
 			print "			General DigiTest	", $device,"\n";   #, $lineTO,"\n";
 			
 			if($testorder{$device} eq "tested-dig" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
 				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				}
-			elsif($testorder{$versions[0]."+".$device} ne "" and substr($testplan{$device},0,6) eq "tested"){
-				$cover = 1;
-				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno1);	## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+			elsif($testorder{$device} eq "untest-dig"){
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno1);	## Excel ##
+				$power-> write($rowP, 2, " - ", $format_data);			## Excel ##
 				}
 			elsif(($testorder{$device} eq "tested-dig" or $testorder{$versions[0]."+".$device} ne "") and substr($testplan{$device},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
-			elsif($testplan{$device} eq "unidentified"){
+			else{
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Unidentified - ", $format_anno1);			## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
+				$power-> write($rowP, 2, "Unidentified - ", $format_VCC);			## Excel ##
 				}
 			
 			if($testorder{$device} eq "tested-dig" or $testorder{$versions[0]."+".$device} ne ""){
@@ -1096,7 +1105,7 @@ foreach $device (@bom_list)
 				
 				if ($worksheet == 0){
 				$worksheet = 1;
-				my $IC = $bom_coverage_report-> add_worksheet($device);		## hyperlink
+				$IC = $bom_coverage_report-> add_worksheet($device);		## hyperlink
 				$IC-> write_url('A1', 'internal:PowerTest!A1');  			## hyperlink
 				$IC->conditional_formatting('A1:GR999',
 				    {
@@ -1273,7 +1282,7 @@ foreach $device (@bom_list)
 					$cover = 1; $base = 1;
 					$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
 					#$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno);	## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno);	## Excel ##
 					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 					$rowP++;
 					}
@@ -1282,7 +1291,7 @@ foreach $device (@bom_list)
 					print $device."\n"; $base = 1;
 					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
 					#$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno);			## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno);			## Excel ##
 					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);	## Excel ##
 					$rowP++;
 					}
@@ -1291,7 +1300,7 @@ foreach $device (@bom_list)
 					print $device."\n"; $base = 1;
 					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
 					#$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, $testorder{$device}." - [base]", $format_anno1);	## Excel ##
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno1);	## Excel ##
 					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
 					$rowP++;
 					}
@@ -1326,15 +1335,15 @@ foreach $device (@bom_list)
 				}
 		}
 		#print $rowD_ver,$rowP."\n";
-		if (substr($testorder{$device},7,3) eq "dig"  or substr($testorder{$versions[0]."+".$device},7,3) eq "dig"){
-		#print $device."\n";
-		if ($rowP - $rowD_ver > 0){$power-> merge_range($rowD_ver-1, 0, $rowP-1, 0, $device, $format_hylk);}}
+		#if (substr($testorder{$device},7,3) eq "dig"  or substr($testorder{$versions[0]."+".$device},7,3) eq "dig"){
+			#if ($rowP - $rowD_ver > 0){$power-> merge_range($rowD_ver-1, 0, $rowP-1, 0, $device, $format_hylk);}#}
 		
 	################ testable mixed test ##########################################################################################
 	if($testorder{$device} eq "tested-mix" or $testorder{$device} eq "untest-mix"
        )
 		{
 			$foundTO = 0;
+			$rowP_ori = $rowP;
 			print "			General MixTest		", $device,"\n";   #, $lineTO,"\n";
 			
 			if($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,6) eq "tested"){
@@ -1383,6 +1392,7 @@ foreach $device (@bom_list)
        )
 		{
 			$foundTO = 0;
+			$rowP_ori = $rowP;
 			$length_SNail = 10;
 			print "			General BscTest	", $device,"\n";   #, $lineTO,"\n";
 			
@@ -2058,7 +2068,7 @@ foreach $device (@bom_list)
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				$rowP++;
 				}
@@ -2070,7 +2080,7 @@ foreach $device (@bom_list)
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
 				$rowP++;
 				}
@@ -2100,12 +2110,12 @@ foreach $device (@bom_list)
 			if($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
 				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
 			if($testorder{$Mult_file} eq "tested-dig" and $testplan{$Mult_file},){
@@ -2119,7 +2129,7 @@ foreach $device (@bom_list)
 				
 				if ($worksheet == 0){
 				$worksheet = 1;
-				my $IC = $bom_coverage_report-> add_worksheet($device);		## hyperlink
+				$IC = $bom_coverage_report-> add_worksheet($device);		## hyperlink
 				$IC-> write_url('A1', 'internal:PowerTest!A1');  			## hyperlink
 				$IC->conditional_formatting('A1:GR999',
 				    {
@@ -2333,12 +2343,12 @@ foreach $device (@bom_list)
 			if($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,6) eq "tested"){
 				$cover = 1;
 				$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				}
 			elsif($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
 			if($testorder{$Mult_file} eq "tested-bscan" and $testplan{$Mult_file},){
@@ -2530,6 +2540,8 @@ foreach $device (@bom_list)
    ########################################################################################################################################
 #print $testorder{$device},"\n";
 Next_Dev:
+#print $device.$rowP."	".$rowP_ori."\n";
+if ($rowP - $rowP_ori > 1 and $testorder{$device} =~ /tested-dig|tested-bscan|untest-dig|untest-bscan/){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
 }
 
 ############################### shorts threshold statistic ################################################################################
