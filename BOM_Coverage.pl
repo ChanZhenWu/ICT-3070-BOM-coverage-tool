@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v6.9>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.0>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -593,7 +593,7 @@ foreach $device (@bom_list)
 								}
 							}
 							$rowT++;
-							#goto Next_Dev;
+							goto Next_Ori;
 						}
 						elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
 						{
@@ -750,7 +750,7 @@ foreach $device (@bom_list)
 								}
 							}
 							$rowT++;
-							#goto Next_Dev;
+							goto Next_Rev;
 						}
 						elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
 						{
@@ -1669,7 +1669,7 @@ foreach $device (@bom_list)
 							#print substr($lineTF,9)."\n";
 							@param =  split('\,', substr($lineTF,6));
 							if ($lineTF !~ m/\"/g){
-							$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
+							#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
 							$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
 							$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
 							$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
@@ -1825,7 +1825,7 @@ foreach $device (@bom_list)
 							#print substr($lineTF,9)."\n";
 							@param =  split('\,', substr($lineTF,6));
 							if ($lineTF !~ m/\"/g){
-							$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
+							#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
 							$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
 							$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
 							$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
