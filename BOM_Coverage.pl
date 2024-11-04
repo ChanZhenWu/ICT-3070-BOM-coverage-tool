@@ -2547,7 +2547,7 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 	{
 		chomp $nodes;
 		$nodes =~ s/^ +//;	   #clear head of line spacing
-		if ($nodes =~ "threshold") 
+		if (substr($nodes,0,9) =~ "threshold") 
 			{
 				$thres = substr($nodes, index($nodes,"threshold")+10);
 				if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
