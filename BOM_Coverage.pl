@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.0>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.1>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -55,7 +55,7 @@ $power-> freeze_panes(1,1);				#冻结行、列
 $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
-$coverage-> set_column('A:F',20);		#设置列宽
+$coverage-> set_column('A:G',20);		#设置列宽
 $tested-> set_column('A:E',20);			#设置列宽
 $tested-> set_column('F:F',40);			#设置列宽
 $untest-> set_column(0,1,20);			#设置列宽
@@ -168,6 +168,11 @@ $coverage-> write("C1", ' Digital logic test', $format_head);
 $coverage-> write("D1", ' Analog function test', $format_head);
 $coverage-> write("E1", ' Bscan test', $format_head);
 $coverage-> write("F1", ' No coverage', $format_head);
+$coverage-> write("G1", ' "-" for None', $format_anno);
+$coverage-> write("G2", ' "V" for covered', $format_anno);
+$coverage-> write("G3", ' "N" for Not covered', $format_anno);
+$coverage-> write("G4", ' "L" for paralled', $format_anno);
+$coverage-> write("G5", ' "K" for skipped', $format_anno);
 
 $coverage->conditional_formatting('B2:F99999',
 	{
@@ -343,6 +348,14 @@ open (TO, "< testorder");
 		if ($dev[0] eq "test zener" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-zen'}
 		if ($dev[0] eq "test inductor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-ind'}
 		if ($dev[0] eq "test fuse" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'tested-fuse'}
+
+		if ($dev[0] eq "skip resistor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-res'}
+		if ($dev[0] eq "skip capacitor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-cap'}
+		if ($dev[0] eq "skip jumper" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-jmp'}
+		if ($dev[0] eq "skip diode" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-dio'}
+		if ($dev[0] eq "skip zener" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-zen'}
+		if ($dev[0] eq "skip inductor" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-ind'}
+		if ($dev[0] eq "skip fuse" and ($dev[2] eq "" or $dev[2] ne "nulltest")){$value = 'skipped-fuse'}
 
 		if ($dev[0] =~ "resistor" and $dev[2] eq "nulltest"){$value = 'untest-res'}
 		if ($dev[0] =~ "capacitor" and $dev[2] eq "nulltest"){$value = 'untest-cap'}
@@ -863,7 +876,7 @@ foreach $device (@bom_list)
 			$rowU++;
 			next; #goto Next_Dev;
 		}
-	################ testorder skipped devices #######################################################################################
+	################ testorder Nulltest devices ######################################################################################
 	elsif($testorder{$device} eq "untest-res"
 		or $testorder{$device} eq "untest-cap"
 		or $testorder{$device} eq "untest-jmp"
@@ -902,7 +915,46 @@ foreach $device (@bom_list)
 			close ALL;
 			#next; #goto Next_Dev;
 		}
-	################ parallel tested devices ######################################################################################
+	################ testorder skipped devices #######################################################################################
+	elsif($testorder{$device} eq "skipped-res"
+		or $testorder{$device} eq "skipped-cap"
+		or $testorder{$device} eq "skipped-jmp"
+		or $testorder{$device} eq "skipped-dio"
+		or $testorder{$device} eq "skipped-zen"
+		or $testorder{$device} eq "skipped-ind"
+		or $testorder{$device} eq "skipped-fuse"
+       )
+		{
+			if ($testorder{$device} ne "skipped-dio"){$foundTO = 1;}
+			print "			General Skipped		", $device,"\n";   #, $lineTO,"\n";
+			$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
+			$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  ## Excel ##
+		$UTline = "";
+		$fileF = 0;
+		
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
+		open(ALL, "<analog/$device") || open(ALL, "<analog/1%$device") || $untest-> write($rowU, 2, "!TestFile not found.", $format_anno1);
+		while($line = <ALL>)
+			{
+			$fileF = 1;
+			if (index($line,$device)>1){
+				$line = substr($line,1);
+				$line =~ s/(^\s+)//g;
+				if (length($line)> $length_anno){$length_anno = length($line);}
+				$UTline = $line . $UTline;}
+			elsif (eof){last;}
+			}
+			$UTline =~ s/(^\s+|\s+$)//g;
+			if($UTline eq "" and $fileF == 1){$untest-> write($rowU, 2, "No Comments Found in TestFile.", $format_anno1);}
+			if($UTline ne ""){
+			$untest-> write($rowU, 2, $UTline, $format_anno);
+			$untest-> set_column(2, 2, $length_anno);
+			}
+			$rowU++;
+			close ALL;
+			#next; #goto Next_Dev;
+		}
+	################ parallel tested devices #########################################################################################
 	elsif($testorder{$device} eq "paral-res"
 		or $testorder{$device} eq "paral-cap"
 		or $testorder{$device} eq "paral-jmp"
