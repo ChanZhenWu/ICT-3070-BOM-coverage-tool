@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.1>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.2>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -33,12 +33,19 @@ use List::Util 'uniq';
    	}
 
 
+print "  please specify BOM list file: ";
+   $bom=<STDIN>;
+   chomp $bom;
+
 ############################ Excel ######################################################
 use Excel::Writer::XLSX;
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+#print $hour."-".$min."\n";
 
 $currdir = `pwd`; chomp $currdir;
 
-my $bom_coverage_report = Excel::Writer::XLSX->new('BOM_Coverage_Report.xlsx');
+$board = substr($currdir,rindex($currdir,"\/")+1);
+my $bom_coverage_report = Excel::Writer::XLSX->new($board.'-BOM_Coverage'."-".$hour.$min.$sec.'.xlsx');
 my $summary = $bom_coverage_report-> add_worksheet('Summary');
 my $coverage = $bom_coverage_report-> add_worksheet('Coverage');
 my $tested = $bom_coverage_report-> add_worksheet('Tested');
@@ -143,9 +150,9 @@ $summary-> write_formula("C5", "=(B5/(B2+B3+B4+B5+B6))", $format_PCT);  #输出P
 $summary-> write_formula("C6", "=(B6/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C7", "=(B7/COUNTA(Shorts_Setting!A2:A9999))", $format_PCT);  #输出Percentage
 
-$summary-> write("A38", $currdir);
-$summary-> write("A39", '* please update JTAG/Compliance pin coverage manually.');
-$summary-> write("A40", '* please scrutinize digital pin coverage.');
+$summary-> write("A21", $currdir);
+$summary-> write("A22", '* please update JTAG/Compliance pin coverage manually.');
+$summary-> write("A23", '* please scrutinize digital pin coverage.');
 
 $tested-> write("H2", 'Type', $format_item);
 $tested-> write("H3", 'Count', $format_item);
@@ -240,7 +247,7 @@ $chart-> add_series(
     data_labels => {value => 1},
 	);
 $chart-> set_style( 10 );
-$summary-> insert_chart('A10', $chart, 10, 0, 1.0, 1.6);
+$summary-> insert_chart('E1', $chart, 1, 1, 1.0, 1.6);
 
 $rowC = 0;
 $rowT = 1;
@@ -252,30 +259,175 @@ $length_TO = 8;
 $length_TP = 8;
 $len_ver = 0;
 
-print "  please specify BOM list file: ";
-   $bom=<STDIN>;
-   chomp $bom;
 
 $start_time = time();
-
 ##################### loading bom to hash ################################################
-print "  gethering all BOM devices...";
+print "  Gathering all BOM devices...";
 my @bom_list = ();
-open (Bom, "< $bom"); 
-	while($dev = <Bom>)
-	{
-		$dev =~ s/(^\s+|\s+$)//g;
-		$dev = lc($dev);
 
+my $number = 0;
+open (Export, "> component_list.txt"); 
+open (Import, "< $bom"); 
+	while(my $array = <Import>)
+	{
+	chomp $array;
+	$array =~ s/\s+//g;	   #clear head of line spacing
+	if ($array =~ "\," and $array !~ "\-")
+		{
+		my @list = split(/,/, $array);
+		#print scalar@list."\n";
+		for (my $num = 0; $num < scalar@list; $num++)
+			{
+				$list[$num] =~ s/(^\s+|\s+$)//g;
+				printf Export $list[$num]."\n";
+				#print $list[$num]."\n";
+				$dev = lc($list[$num]);
+				$bom_list = push(@bom_list, $dev);
+				$number++;
+			}
+		}
+	elsif ($array =~ "\-")
+	{
+	my @fields = split(/,/, $array);
+		# print " * ".$array."\n";
+		for (my $num = 0; $num < scalar@fields; $num++)
+		{
+			#print scalar@fields."\n";
+			#print "	".$fields[$num]."\n";
+		if ($fields[$num] =~ "\-")
+		{
+		my $string = "";
+		my $suffix = "";
+		my $begin = "";
+		my $final = "";
+		my $style = "";  # C for character, D for digit	
+			# print "	".$fields[$num]."\n";
+	my @Comps = split(/-/, $fields[$num]);
+		
+		my @Comp = split(/([a-z]+)/i, $Comps[0]);
+			if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 3)
+				{$style = "CD"; $begin = $Comp[scalar@Comp - 1];}  # begin
+
+			if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 4)
+				{$style = "CDC"; $begin = $Comp[scalar@Comp - 2]; $suffix = $Comp[scalar@Comp - 1];}  # begin
+
+			if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 5)
+				{$style = "CDCD"; $begin = $Comp[scalar@Comp - 1];}  # begin
+
+		@Comp = split(/([a-z]+)/i, $Comps[1]);
+			$final = $Comp[scalar@Comp - 1];  # final
+			#print $final."\n";
+			if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 4)
+				{$final = $Comp[scalar@Comp - 2];}  # final
+			
+			# @fields(,) > @Comps(-) > @Comp(c)
+			#-----------------------------------------------------------------------------ok
+			if ($style eq "CD")
+			{
+			#print "CD\n";
+			for (my $num = $begin; $num < $final+1; $num++)
+				{
+					$string = substr($Comps[1],0,length($Comps[0])-length($begin)).$num;
+					if(length($Comps[0]) - length($string) == 1){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."0".$num;}
+					if(length($Comps[0]) - length($string) == 2){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."00".$num;}
+					if(length($Comps[0]) - length($string) == 3){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."000".$num;}
+					if(length($Comps[0]) - length($string) == 4){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."0000".$num;}
+					
+					$string =~ s/(^\s+|\s+$)//g;
+					printf Export $string."\n";
+					#print $string."\n";
+					$dev = lc($string);
+					$bom_list = push(@bom_list, $dev);
+					$number++;
+				}
+			}
+
+			#-----------------------------------------------------------------------------
+			if ($style eq "CDC")
+			{
+			#print "CDC\n";
+			for (my $num = $begin; $num < $final+1; $num++)
+				{
+					$string = substr($Comps[0],0,index($Comps[0],$begin)).$num.$suffix;
+					if(length($Comps[0]) - length($string) == 1){$string = substr($Comps[0],0,index($Comps[0],$begin))."0".$num.$suffix;}
+					if(length($Comps[0]) - length($string) == 2){$string = substr($Comps[0],0,index($Comps[0],$begin))."00".$num.$suffix;}
+					if(length($Comps[0]) - length($string) == 3){$string = substr($Comps[0],0,index($Comps[0],$begin))."000".$num.$suffix;}
+					if(length($Comps[0]) - length($string) == 4){$string = substr($Comps[0],0,index($Comps[0],$begin))."0000".$num.$suffix;}
+					
+					$string =~ s/(^\s+|\s+$)//g;
+					printf Export $string."\n";
+					#print $string."\n";
+					$dev = lc($string);
+					$bom_list = push(@bom_list, $dev);
+					$number++;
+				}
+			}
+
+			#-----------------------------------------------------------------------------
+			if ($style eq "CDCD")
+			{
+			#print "CDCD\n";
+			for (my $num = $begin; $num < $final+1; $num++)
+				{
+					$string = substr($Comps[0],0,length($Comps[0])-length($begin)).$num;
+					if(length($Comps[0]) - length($string) == 1){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."0".$num;}
+					if(length($Comps[0]) - length($string) == 2){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."00".$num;}
+					if(length($Comps[0]) - length($string) == 3){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."000".$num;}
+					if(length($Comps[0]) - length($string) == 4){$string = substr($Comps[0],0,length($Comps[0])-length($begin))."0000".$num;}
+					
+					$string =~ s/(^\s+|\s+$)//g;
+					printf Export $string."\n";
+					#print $string."\n";
+					$dev = lc($string);
+					$bom_list = push(@bom_list, $dev);
+					$number++;
+				}
+			}
+		}
+		else
+		{
+		$fields[$num] =~ s/(^\s+|\s+$)//g;
+		printf Export $fields[$num]."\n";
+		#print $fields[$num]."\n";
+		$dev = lc($fields[$num]);
 		$bom_list = push(@bom_list, $dev);
-		#print $bom_list,"	--	",$value."\n";
+		$number++;
+			}
+		}
 	}
-close Bom;
+	else
+		{
+			$array =~ s/(^\s+|\s+$)//g;
+			print Export $array,"\n";
+			#print $array,"\n";
+			$dev = lc($array);
+			$bom_list = push(@bom_list, $dev);
+			$number++;
+		}
+	}
+	
+close Import;
+close Export;
+
+#open (Bom, "< $bom"); 
+#	while($dev = <Bom>)
+#	{
+#		$dev =~ s/(^\s+|\s+$)//g;
+#		$dev = lc($dev);
+#
+#		$bom_list = push(@bom_list, $dev);
+#		#print $bom_list,"	--	",$value."\n";
+#	}
+#close Bom;
+
 print "[DONE]\n";
+print "\n	BOM count: ".$number."\n";
+$summary-> write("A11", "BOM count: ".$number);
 
 @bom_list = uniq @bom_list;
 $length = scalar @bom_list;
-print "	bom: ", $length,"\n";
+print "	valid BOM: ", $length,"\n";
+$summary-> write("A12", "valid BOM: ".$length);
 
 ##################### loading BDG to hash ################################################
 my %bdg_list = ();
@@ -305,6 +457,7 @@ my $BDG_File = "./bdg_data/dig_inc_ver_fau.dat";
 @keysBDG = keys %bdg_list;
 $sizeBDG = @keysBDG;
 print "	BDG: ", $sizeBDG,"\n";
+$summary-> write("A13", "BDG: ".$sizeBDG);
 
 ##################### loading pins to hash ###############################################
 my %hash_pin = ();
@@ -325,7 +478,8 @@ close Pin;
 
 @keys = keys %hash_pin;
 $size = @keys;
-print "	pins: ".$size."\n";
+print "	Pins: ".$size."\n";
+$summary-> write("A14", "Pins: ".$size);
 
 ##################### loading testorder to hash ##########################################
 my %testorder = ();
@@ -425,10 +579,12 @@ close TO;
 @keysTO = keys %testorder;
 $sizeTO = @keysTO;
 print "	testorder: ".$sizeTO."\n";
+$summary-> write("A15", "testorder: ".$sizeTO);
 
 @versions = uniq @versions;
 $len_ver = scalar @versions;
 print "	$len_ver versions: @versions\n";
+$summary-> write("A16", "$len_ver versions: @versions");
 
 ##################### loading testplan to hash ###########################################
 %testplan = ();
@@ -469,6 +625,8 @@ close TP;
 @keysTP = keys %testplan;
 $sizeTP = @keysTP;
 print "	testplan: ".$sizeTP."\n";
+$summary-> write("A17", "testplan: ".$sizeTP);
+
 $row_ver = 0;
 $rowP_ver = 0;
 $rowD_ver = 0;
@@ -1000,13 +1158,13 @@ foreach $device (@bom_list)
 		{
 			$foundTO = 0;
 			print "			General PwrTest		", $device,"\n";   #, $lineTO,"\n";
-
+			
 			if($testorder{$device} eq "tested-pwr" and substr($testplan{$device},0,6) eq "tested"){
 				$cover = 1;
 				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
-			@array = ("-","-","-","-","-","-","-","-","-","-");
-			$array_ref = \@array;
-			$power-> write_row($rowP, 3, $array_ref, $format_data);
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+					$array_ref = \@array;
+					$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
@@ -1127,11 +1285,6 @@ foreach $device (@bom_list)
 				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
-				}
-			elsif($testorder{$device} eq "untest-dig"){
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$power-> write($rowP, 1, $testorder{$device}." - ".$device." - [base]", $format_anno1);	## Excel ##
-				$power-> write($rowP, 2, " - ", $format_data);			## Excel ##
 				}
 			elsif(($testorder{$device} eq "tested-dig" or $testorder{$versions[0]."+".$device} ne "") and substr($testplan{$device},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
@@ -2599,7 +2752,7 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 	{
 		chomp $nodes;
 		$nodes =~ s/^ +//;	   #clear head of line spacing
-		if (substr($nodes,0,9) =~ "threshold") 
+		if (substr($nodes,0,9) =~ "threshold")
 			{
 				$thres = substr($nodes, index($nodes,"threshold")+10);
 				if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
