@@ -39,10 +39,12 @@ print "  please specify BOM list file: ";
 
 ############################ Excel ######################################################
 use Excel::Writer::XLSX;
+use Cwd;
+$currdir = getcwd;
+
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 #print $hour."-".$min."\n";
-
-$currdir = `pwd`; chomp $currdir;
+#$currdir = `pwd`; chomp $currdir;
 
 $board = substr($currdir,rindex($currdir,"\/")+1);
 my $bom_coverage_report = Excel::Writer::XLSX->new($board.'-BOM_Coverage'."-".$hour.$min.$sec.'.xlsx');
@@ -2767,8 +2769,11 @@ open (Thres, "< shorts") || open (Thres, "< 1%shorts");
 		if ($nodes =~ "nodes")
 		{
 			if(substr($nodes,0,1) eq "!"){
-			$short_thres-> write($node, 0, substr($nodes, 0, rindex($nodes,"!")), $format_data);  ## Nodes ##
-			$short_thres-> write($node, 1, substr($nodes, rindex($nodes,"!")), $format_data);  ## Thres ##
+			$nodes =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+			$node_name = substr($nodes, 0, rindex($nodes,"!"));
+			$node_name =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+			$short_thres-> write($node, 0, $node_name, $format_anno);  ## Nodes ##
+			$short_thres-> write($node, 1, substr($nodes, rindex($nodes,"!")), $format_anno);  ## Thres ##
 			$short_thres-> write($node, 2, "-", $format_data);  ## Delay ##
 				}
 			elsif(substr($nodes,0,5) eq "nodes"){
