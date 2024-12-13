@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.2>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.3>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -274,6 +274,7 @@ open (Import, "< $bom");
 	{
 	chomp $array;
 	$array =~ s/\s+//g;	   #clear head of line spacing
+	next if ($array eq "");
 	if ($array =~ "\," and $array !~ "\-")
 		{
 		my @list = split(/,/, $array);
@@ -426,6 +427,7 @@ print "[DONE]\n";
 print "\n	BOM count: ".$number."\n";
 $summary-> write("A11", "BOM count: ".$number);
 
+@bom_list = sort @bom_list;
 @bom_list = uniq @bom_list;
 $length = scalar @bom_list;
 print "	valid BOM: ", $length,"\n";
@@ -493,7 +495,8 @@ open (TO, "< testorder");
 		@dev = split('\"',$dev);
 		$dev[0] =~ s/(^\s+|\s+$)//g;
 		$dev[1] =~ s/(^\s+|\s+$)//g;
-		$dev[2] = substr($dev[2],1); $dev[2] =~ s/(^\s+|\s+$)//g;
+		if ($dev[2] !~ "version"){$dev[2] = substr($dev[2],1);}
+		$dev[2] =~ s/(^\s+|\s+$)//g;
 		#next if ($dev[2] =~ "version");
 
 	if ($dev[2] ne "version"){
@@ -1267,7 +1270,7 @@ foreach $device (@bom_list)
 					print $device." - [$versions[$v]]\n";
 					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
 					$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, "untest-pwr - [".$versions[$v]."]", $format_anno1);				## Excel ##
+					$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);				## Excel ##
 					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
 					$rowP++;
 					}
@@ -1532,7 +1535,7 @@ foreach $device (@bom_list)
 					print $device." - [$versions[$v]]\n";
 					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
 					#$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-					$power-> write($rowP, 1, "untest-dig - [".$versions[$v]."]", $format_anno1);## Excel ##
+					$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);## Excel ##
 					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
 					$rowP++;
 					}
@@ -1550,24 +1553,23 @@ foreach $device (@bom_list)
 				$cover = 1;
 				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
-				@array = ("-","-","-","-","-","-","-","-","-");
+				@array = ("-","-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
-				$power-> write_row($rowP, 4, $array_ref, $format_data);
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "tested-mix" and substr($testplan{$device},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
 				$power-> write_row($rowP, 4, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
 				$rowP++;
 				}
@@ -1606,7 +1608,7 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
-			if($testorder{$device} eq "tested-bscan" and $testplan{$device},){
+			if($testorder{$device} eq "tested-bscan" and substr($testplan{$device},0,6) eq "tested"){
 			
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -2273,7 +2275,6 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "tested-pwr" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-
 				@array = ("-","-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -2285,17 +2286,22 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "untest-pwr"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 2, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+				$rowP++;
 				}
-			elsif($testorder{$Mult_file} eq "tested-pwr"){
+			elsif($testorder{$Mult_file} eq "tested-pwr" and $testplan{$Mult_file} eq ""){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
+				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$rowP++;
 				}
 		}
 	#%%%%%%%%%%%%%%% testable digital test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2314,10 +2320,14 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
-			if($testorder{$Mult_file} eq "tested-dig" and $testplan{$Mult_file},){
+			if($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,6) eq "tested"){
 			
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -2471,17 +2481,22 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "untest-dig"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 2, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+				$rowP++;
 				}
-			elsif($testorder{$Mult_file} eq "tested-dig"){
+			elsif($testorder{$Mult_file} eq "tested-dig" and $testplan{$Mult_file} eq ""){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
+				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$rowP++;
 				}
 		}
 	#%%%%%%%%%%%%%%% testable mixed device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2495,40 +2510,44 @@ foreach $device (@bom_list)
 				$cover = 1;
 				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
 
-				@array = ("-","-","-","-","-","-","-","-","-");
+				@array = ("-","-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
-				$power-> write_row($rowP, 4, $array_ref, $format_data);
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "tested-mix" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
 				$power-> write_row($rowP, 4, $array_ref, $format_data);
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}, $format_anno);				## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-mix"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 2, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+				$rowP++;
 				}
-			elsif($testorder{$Mult_file} eq "tested-mix"){
+			elsif($testorder{$Mult_file} eq "tested-mix" and $testplan{$Mult_file} eq ""){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
+				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$rowP++;
 				}
 		}
 	#%%%%%%%%%%%%%%% testable Bscan device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2547,10 +2566,15 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,7) eq "skipped"){
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
+				$rowP++;
 				}
-			if($testorder{$Mult_file} eq "tested-bscan" and $testplan{$Mult_file},){
+			if($testorder{$Mult_file} eq "tested-bscan" and substr($testplan{$Mult_file},0,6) eq "tested"){
 			
 				@array = ("-","-","-","-","-","-","-","-","-");
 				$array_ref = \@array;
@@ -2707,19 +2731,98 @@ foreach $device (@bom_list)
 				}
 			elsif($testorder{$Mult_file} eq "untest-bscan"){
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 2, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+				$rowP++;
 				}
-			elsif($testorder{$Mult_file} eq "tested-bscan"){
+			elsif($testorder{$Mult_file} eq "tested-bscan" and $testplan{$Mult_file} eq ""){
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
-				$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
-				$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);  				## Excel ##
-				$rowU++;
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
+				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$rowP++;
 				}
 		}
+	#%%%%%%%%%%%%%%% Bscan [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		$rowD_ver = $rowP;
+		$base = 0;
+		for ($v = 0; $v < $len_ver+1; $v = $v + 1){
+		
+			if($base == 0 and length($testorder{$Mult_file}) ==  12 and length($testorder{$versions[$v]."+".$Mult_file}) == 16
+				and (substr($testorder{$Mult_file},7,5) eq "bscan"  or substr($testorder{$versions[0]."+".$Mult_file},7,9) eq "bscan+ver"))
+				{
+				@array = ("-","-","-","-","-","-","-","-","-","-");
+				$array_ref = \@array;
+				$power-> write_row($rowP, 3, $array_ref, $format_data);
+				
+				#print $testorder{$Mult_file}."	".$testorder{$versions[$v]."+".$Mult_file}."\n";
+				print "			Multiple BscVTest	"; #, $Mult_file." - [$versions[$v]]\n";   #, $lineTO,"\n";
+				
+				#base version TP&TO tested
+				if($testorder{$Mult_file} eq "tested-bscan" and $testorder{$versions[$v]."+".$Mult_file} eq "" and substr($testplan{$Mult_file},0,6) eq "tested"){
+					print $Mult_file."\n";
+					$cover = 1; $base = 1;
+					$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file." - [base]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+					$rowP++;
+					}
+				#base version TO tested, TP skipped
+				elsif($testorder{$Mult_file} eq "tested-bscan" and $testorder{$versions[$v]."+".$Mult_file} eq "" and substr($testplan{$Mult_file},0,7) eq "skipped"){
+					print $Mult_file."\n"; $base = 1;
+					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file." - [base]", $format_anno);			## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);	## Excel ##
+					$rowP++;
+					}
+				#base version TO skipped
+				elsif($testorder{$Mult_file} eq "untest-bscan" and $testorder{$versions[$v]."+".$Mult_file} eq ""){
+					print $Mult_file."\n"; $base = 1;
+					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file." - [base]", $format_anno1);	## Excel ##
+					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+					$rowP++;
+				}
+				#mult-ver TP&TO tested
+				elsif($testorder{$versions[$v]."+".$Mult_file} eq "tested-bscan+ver" and substr($testplan{$Mult_file},0,6) eq "tested"){
+					print $Mult_file." - [$versions[$v]]\n";
+					$cover = 1;
+					$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, "tested-bscan - [".$versions[$v]."]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+					$rowP++;
+		}
+				#mult-ver TO tested, TP skipped
+				elsif($testorder{$versions[$v]."+".$Mult_file} eq "tested-bscan+ver" and substr($testplan{$Mult_file},0,7) eq "skipped"){
+					print $Mult_file." - [$versions[$v]]\n";
+					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, "tested-bscan - [".$versions[$v]."]", $format_anno);				## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
+					$rowP++;
+					}
+				#mult-ver TO skipped
+				elsif($testorder{$versions[$v]."+".$Mult_file} eq "untest-bscan+ver"){
+					print $Mult_file." - [$versions[$v]]\n";
+					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
+					#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+					$power-> write($rowP, 1, "Skipped - $Mult_file -ver: [".$versions[$v]."]", $format_anno1);## Excel ##
+					$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+					$rowP++;
+					}
+				}
+		}
+		
 	########################################################################################################################################
 		}}
 	}
