@@ -1296,7 +1296,7 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
-			else{
+			elsif($testplan{$device} eq ""){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Unidentified - ", $format_VCC);			## Excel ##
@@ -2212,6 +2212,45 @@ foreach $device (@bom_list)
 			close ALL;
 			#last;
 		}
+	#%%%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	elsif($testorder{$keysTO[$i]} eq "skipped-res"
+		or $testorder{$keysTO[$i]} eq "skipped-cap"
+		or $testorder{$keysTO[$i]} eq "skipped-jmp"
+		or $testorder{$keysTO[$i]} eq "skipped-dio"
+		or $testorder{$keysTO[$i]} eq "skipped-zen"
+		or $testorder{$keysTO[$i]} eq "skipped-ind"
+		or $testorder{$keysTO[$i]} eq "skipped-fuse"
+       )
+		{
+			$foundTO = 1;
+			print "			Multiple Skipped	", $Mult_file,"\n";   #, $lineTO,"\n";
+			$untest-> write($rowU, 0, $Mult_file, $format_data);  ## Excel ##
+			$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  ## Excel ##
+		$UTline = "";
+		$fileF = 0;
+		
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
+		open(ALL, "<analog/$Mult_file") || open(ALL, "<analog/1%$Mult_file") || $untest-> write($rowU, 2, "!TestFile not found.", $format_anno1);
+		while($line = <ALL>)
+			{
+			$fileF = 1;
+			if (index($line,$device)>1){
+				$line = substr($line,1);
+				$line =~ s/(^\s+)//g;
+				if (length($line)> $length_anno){$length_anno = length($line);}
+				$UTline = $line . $UTline;}
+			elsif (eof){last;}
+			}
+			$UTline =~ s/(^\s+|\s+$)//g;
+			if($UTline eq "" and $fileF == 1){$untest-> write($rowU, 2, "No Comments Found in TestFile.", $format_anno1);}
+			if($UTline ne ""){
+			$untest-> write($rowU, 2, $UTline, $format_anno);
+			$untest-> set_column(2, 2, $length_anno);
+			}
+			$rowU++;
+			close ALL;
+			#next; #goto Next_Dev;
+		}
 	#%%%%%%%%%%%%%%% parallel tested devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif($testorder{$keysTO[$i]} eq "paral-res"
 		or $testorder{$keysTO[$i]} eq "paral-cap"
@@ -2290,6 +2329,7 @@ foreach $device (@bom_list)
 				$array_ref = \@array;
 				$power-> write_row($rowP, 2, $array_ref, $format_data);
 
+				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
 				$rowP++;
 				}
@@ -2299,6 +2339,7 @@ foreach $device (@bom_list)
 				$array_ref = \@array;
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
+				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$rowP++;
@@ -2326,6 +2367,7 @@ foreach $device (@bom_list)
 
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
+				$rowP++;
 				}
 			if($testorder{$Mult_file} eq "tested-dig" and substr($testplan{$Mult_file},0,6) eq "tested"){
 			
@@ -2536,6 +2578,7 @@ foreach $device (@bom_list)
 				$array_ref = \@array;
 				$power-> write_row($rowP, 2, $array_ref, $format_data);
 
+				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
 				$rowP++;
 				}
@@ -2545,6 +2588,7 @@ foreach $device (@bom_list)
 				$array_ref = \@array;
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
+				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
 				$rowP++;
