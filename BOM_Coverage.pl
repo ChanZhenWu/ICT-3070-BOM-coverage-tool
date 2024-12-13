@@ -1034,7 +1034,7 @@ foreach $device (@bom_list)
 			print "			Testplan InExistent	", $device,"\n";   #, $lineTO,"\n";
 			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
 			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
-			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
+			$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);					## Excel ##
 			$rowU++;
 			next; #goto Next_Dev;
@@ -1197,7 +1197,7 @@ foreach $device (@bom_list)
 			elsif($testorder{$device} eq "tested-pwr"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
@@ -1296,7 +1296,7 @@ foreach $device (@bom_list)
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 				}
-			elsif($testplan{$device} eq ""){
+			elsif($testplan{$device} eq "" or $testplan{$device} eq "unidentified"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Unidentified - ", $format_VCC);			## Excel ##
@@ -1463,7 +1463,7 @@ foreach $device (@bom_list)
 			elsif($testorder{$device} eq "tested-dig"){
 				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
@@ -1583,7 +1583,7 @@ foreach $device (@bom_list)
 			elsif($testorder{$device} eq "tested-mix"){
 				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}
@@ -1773,7 +1773,7 @@ foreach $device (@bom_list)
 			elsif($testorder{$device} eq "tested-bscan"){
 				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
 				$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-				$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 				$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
 				$rowU++;
 				}		
@@ -2168,7 +2168,7 @@ foreach $device (@bom_list)
 			print "			Testplan InExistent	", $Mult_file,"\n";   #, $lineTO,"\n";
 			if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
 			$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
-			$untest-> write($rowU, 1, "NO test item found in TestPlan.", $format_anno1);	## Excel ##
+			$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
 			$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);				## Excel ##
 			$rowU++;
 			#last; #goto Next_Dev;
@@ -2341,7 +2341,7 @@ foreach $device (@bom_list)
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
-				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				$rowP++;
 				}
 		}
@@ -2537,7 +2537,7 @@ foreach $device (@bom_list)
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
-				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				$rowP++;
 				}
 		}
@@ -2590,7 +2590,7 @@ foreach $device (@bom_list)
 
 				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
-				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				$rowP++;
 				}
 		}
@@ -2789,7 +2789,7 @@ foreach $device (@bom_list)
 				$power-> write_row($rowP, 3, $array_ref, $format_data);
 
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
-				$power-> write($rowP, 2, "NO test item found in TestPlan.", $format_anno1);  	## Excel ##
+				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				$rowP++;
 				}
 		}
