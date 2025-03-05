@@ -1597,6 +1597,7 @@ foreach $device (@bom_list)
   				close SourceFile;
   				chomp($family);
   				$power-> write($rowP, 3, $family, $format_anno);
+  				if($family eq ""){$power-> write($rowP, 3, "Family not defined.", $format_anno1);}
 				$rowP++;
 				}
 			elsif($testorder{$device} eq "untest-dig"){
@@ -1911,6 +1912,7 @@ foreach $device (@bom_list)
   				close SourceFile;
   				chomp($family);
   				$power-> write($rowP, 3, $family, $format_anno);
+  				if($family eq ""){$power-> write($rowP, 3, "Family not defined.", $format_anno1);}
 				$rowP++;
   				}
 			elsif($testorder{$device} eq "untest-bscan"){
@@ -2720,6 +2722,7 @@ foreach $device (@bom_list)
   				close SourceFile;
   				chomp($family);
   				$power-> write($rowP, 3, $family, $format_anno);
+  				if($family eq ""){$power-> write($rowP, 3, "Family not defined.", $format_anno1);}
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-dig"){
@@ -2972,6 +2975,7 @@ foreach $device (@bom_list)
   				close SourceFile;
   				chomp($family);
   				$power-> write($rowP, 3, $family, $format_anno);
+  				if($family eq ""){$power-> write($rowP, 3, "Family not defined.", $format_anno1);}
 				$rowP++;
 				}
 			elsif($testorder{$Mult_file} eq "untest-bscan"){
