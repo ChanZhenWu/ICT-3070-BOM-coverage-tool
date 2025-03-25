@@ -3286,11 +3286,11 @@ foreach my $device (@bom_list)
 	if((not exists ($testorder{$device}) or $testorder{$device} eq "") and $foundTO == 0)
 	{
 		#print $foundTO,"--5--","\n";
-		print "			NO Test Found		$device\n"; 
+		print "			NO Valid Test Found	$device\n"; 
 		$coverage-> write($rowC, 5, 'N', $format_data);		#Coverage
 		$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 		$untest-> write($rowU, 1, "NO valid test items found in TestOrder.", $format_anno);  ## Excel ##
-		$untest-> write($rowU, 2, "Check TJ/SP testing.", $format_anno);  ## Excel ##
+		$untest-> write($rowU, 2, "Check TJ/SP/other testing.", $format_anno);  ## Excel ##
 		$rowU++;
 		goto Next_Dev;
 		}
