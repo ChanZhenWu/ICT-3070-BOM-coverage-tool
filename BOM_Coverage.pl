@@ -1,20 +1,21 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.8>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.92>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
 print "\n*******************************************************************************\n";
 print "\n";
 
-#########################################################################################
+##########################################################################################
 
 use strict;
 use warnings;
 use Term::ReadKey;
 use Time::HiRes qw(time);
 use List::Util 'uniq';
+use Term::ANSIColor;
 
 our ($Ccode, $bom, $board, $length, $len, $OP, $IC, $pos, $DigPos, $length_DigPin );
 our ($dev, $v, $i, $value, $versions, $family, $length_SNail, $NailPos );
@@ -47,7 +48,7 @@ print "  please specify BOM list file: ";
 	$bom=<STDIN>;
 	chomp $bom;
 
-############################ Excel ######################################################
+############################ Excel #######################################################
 use Excel::Writer::XLSX;
 use Cwd;
 my $currdir = getcwd;
@@ -75,8 +76,8 @@ $short_thres-> freeze_panes(1,0);		#冻结行、列
 
 $summary-> set_column(0,2,20);			#设置列宽
 $coverage-> set_column('A:G',21);		#设置列宽
-$tested-> set_column('A:E',20);			#设置列宽
-$tested-> set_column('F:F',40);			#设置列宽
+$tested-> set_column('A:F',20);			#设置列宽
+$tested-> set_column('G:G',40);			#设置列宽
 $untest-> set_column(0,1,20);			#设置列宽
 $untest-> set_column(1,2,40);			#设置列宽
 $limited-> set_column(0,1,20);			#设置列宽
@@ -108,10 +109,11 @@ our $format_FPY  = $bom_coverage_report-> add_format(align=>'center', valign=>'v
 
 $tested-> write("A1", '<Items>', $format_head);
 $tested-> write("B1", '<TYPE>', $format_head);
-$tested-> write("C1", '<Nominal>', $format_head);
-$tested-> write("D1", '<HiLimit>', $format_head);
-$tested-> write("E1", '<LoLimit>', $format_head);
-$tested-> write("F1", '<Comments>', $format_head);
+$tested-> write("C1", '<Board value>', $format_head);
+$tested-> write("D1", '<Nominal>', $format_head);
+$tested-> write("E1", '<HiLimit>', $format_head);
+$tested-> write("F1", '<LoLimit>', $format_head);
+$tested-> write("G1", '<Comments>', $format_head);
 
 $untest-> write("A1", '<Items>', $format_head);
 $untest-> write("B1", '<Justification>', $format_head);
@@ -147,7 +149,7 @@ $summary-> write("A3", 'Untest', $format_item);
 $summary-> write("A4", 'LimitTest', $format_item);
 $summary-> write("A5", 'Power-Tested', $format_item);
 $summary-> write("A6", 'Power-UnTest', $format_item);
-$summary-> write("A7", 'Node accessibility rate', $format_item);
+$summary-> write("A7", 'Node accessibility', $format_item);
 
 $summary-> write("B2", '=COUNTA(Tested!A2:A9999)', $format_data);
 $summary-> write("B3", '=COUNTA(Untest!A2:A9999)', $format_data);
@@ -167,20 +169,20 @@ $summary-> write("A21", $currdir);
 $summary-> write("A22", '* please update JTAG/Compliance pin coverage manually.');
 $summary-> write("A23", '* please scrutinize digital pin coverage.');
 
-$tested-> write("H2", 'Type', $format_item);
-$tested-> write("H3", 'Count', $format_item);
-$tested-> write("I2", 'Resistor', $format_head);
-$tested-> write("J2", 'Capacitor', $format_head);
-$tested-> write("K2", 'Inductor', $format_head);
-$tested-> write("L2", 'Jumper', $format_head);
-$tested-> write("M2", 'Diode', $format_head);
-$tested-> write("N2", 'Zener', $format_head);
-$tested-> write_formula("I3", '=COUNTIF(B2:B99999,"Resistor")', $format_data);
-$tested-> write_formula("J3", '=COUNTIF(B2:B99999,"Capacitor")', $format_data);
-$tested-> write_formula("K3", '=COUNTIF(B2:B99999,"Inductor")', $format_data);
-$tested-> write_formula("L3", '=COUNTIF(B2:B99999,"Jumper")', $format_data);
-$tested-> write_formula("M3", '=COUNTIF(B2:B99999,"Diode")', $format_data);
-$tested-> write_formula("N3", '=COUNTIF(B2:B99999,"Zener")', $format_data);
+$tested-> write("I2", 'Type', $format_item);
+$tested-> write("I3", 'Count', $format_item);
+$tested-> write("J2", 'Resistor', $format_head);
+$tested-> write("K2", 'Capacitor', $format_head);
+$tested-> write("L2", 'Inductor', $format_head);
+$tested-> write("M2", 'Jumper', $format_head);
+$tested-> write("N2", 'Diode', $format_head);
+$tested-> write("O2", 'Zener', $format_head);
+$tested-> write_formula("J3", '=COUNTIF(B2:B99999,"Resistor")', $format_data);
+$tested-> write_formula("K3", '=COUNTIF(B2:B99999,"Capacitor")', $format_data);
+$tested-> write_formula("L3", '=COUNTIF(B2:B99999,"Inductor")', $format_data);
+$tested-> write_formula("M3", '=COUNTIF(B2:B99999,"Jumper")', $format_data);
+$tested-> write_formula("N3", '=COUNTIF(B2:B99999,"Diode")', $format_data);
+$tested-> write_formula("O3", '=COUNTIF(B2:B99999,"Zener")', $format_data);
 
 $coverage-> write("A1", ' Device', $format_head);
 $coverage-> write("B1", ' L, C, R, D, Z, J test', $format_head);
@@ -276,7 +278,7 @@ our $len_ver = 0;
 
 
 my $start_time = time();
-##################### loading bom to hash ################################################
+##################### loading bom to array ###############################################
 print "  Gathering all BOM devices...";
 our @bom_list = ();
 
@@ -337,7 +339,7 @@ while(my $array = <Import>)
 					{$final = $Comp[scalar@Comp - 2];}  # final
 				
 				# @fields(,) > @Comps(-) > @Comp(c)
-				#-----------------------------------------------------------------------------ok
+				#-------------------------------------------------------------------------
 				if ($style eq "CD")
 				{
 					#print "CD\n";
@@ -358,7 +360,7 @@ while(my $array = <Import>)
 						}
 					}
 	
-				#-----------------------------------------------------------------------------
+				#-------------------------------------------------------------------------
 				if ($style eq "CDC")
 				{
 					#print "CDC\n";
@@ -379,7 +381,7 @@ while(my $array = <Import>)
 						}
 					}
 	
-				#-----------------------------------------------------------------------------
+				#-------------------------------------------------------------------------
 				if ($style eq "CDCD")
 				{
 					#print "CDCD\n";
@@ -434,6 +436,90 @@ $summary-> write("A11", "BOM count: ".$number);
 $length = scalar @bom_list;
 print "	valid BOM: ", $length,"\n";
 $summary-> write("A12", "valid BOM: ".$length);
+
+##################### loading BOMvalue to hash ###########################################
+my %bom_value = ();
+open (Board, "< board");
+while($line = <Board>)
+{
+	chomp ($line);
+	$line =~ s/(^\s+|\s+$)//g;
+	next if ($line eq '');
+
+	if($line eq "CAPACITOR")
+	{
+		while($line = <Board>)
+		{
+			chomp ($line);
+			$line =~ s/(^\s+|\s+$)//g;
+			last if ($line eq '');
+			my @line = ();
+			@line = split('\ ',$line);
+			last if (scalar @line < 5);
+			#print $line[0],"-",$line[1],"\n";
+			$bom_value{$line[0]} = $line[1];
+			}
+		}
+
+	if($line eq "JUMPER")
+	{
+		while($line = <Board>)
+		{
+			chomp ($line);
+			$line =~ s/(^\s+|\s+$)//g;
+			last if ($line eq '');
+			my @line = ();
+			@line = split('\ ', $line, 4);
+			next if (scalar @line < 4);
+			if(uc(substr($line[3],1,3)) =~ /^(RES|CAP)$/)
+			{
+				my @line1 = split( substr($line[3],4,1), $line[3]);
+				#print $line[0],"-",$line1[1],"\n";	#3757
+				$bom_value{$line[0]} = $line1[1];
+				}
+			}
+		}
+
+	if($line eq "PIN LIBRARY")
+	{
+		while($line = <Board>)
+		{
+			chomp ($line);
+			$line =~ s/(^\s+|\s+$)//g;
+			last if ($line eq '');
+			my @line = ();
+			@line = split('\ ', $line, 3);
+			next if (scalar @line < 3);
+			if(uc(substr($line[2],1,3)) =~ /^(RES|CAP)$/)
+			{
+				my @line1 = split( substr($line[2],4,1), $line[2]);
+				#print $line[0],"-",$line1[1],"\n";
+				$bom_value{$line[0]} = $line1[1];
+				}
+			}
+		}
+
+	if($line eq "RESISTOR")
+	{
+		while($line = <Board>)
+		{
+			chomp ($line);
+			$line =~ s/(^\s+|\s+$)//g;
+			last if ($line eq '');
+			my @line = ();
+			@line = split('\ ',$line);
+			last if (scalar @line < 5);
+			#print $line[0],"-",$line[1],"\n";
+			$bom_value{$line[0]} = $line[1];
+			}
+		}
+
+	}
+close Board;
+
+my @keysBOM = keys %bom_value;
+my $sizeBOM = @keysBOM;
+print "\tBOM value: ", $sizeBOM,"\n";
 
 ##################### loading BDG to hash ################################################
 my %bdg_list = ();
@@ -659,6 +745,13 @@ print "	testplan: ".$sizeTP."\n";
 $summary-> write("A17", "testplan: ".$sizeTP);
 my $row_ver = 0;
 
+our @Paral = ("tested-res","tested-cap");
+our @TOtested = ("tested-res","tested-cap","tested-jmp","tested-dio","tested-zen","tested-ind","tested-fuse");
+our @TOtestedver = ("tested-res+ver","tested-cap+ver","tested-jmp+ver","tested-dio+ver","tested-zen+ver","tested-ind+ver","tested-fuse+ver");
+our @TOuntest = ("untest-res","untest-cap","untest-jmp","untest-dio","untest-zen","untest-ind","untest-fuse");
+our @TOuntestver = ("untest-res+ver","untest-cap+ver","untest-jmp+ver","untest-dio+ver","untest-zen+ver","untest-ind+ver","untest-fuse+ver");
+our @TOskipped = ("skipped-res","skipped-cap","skipped-jmp","skipped-dio","skipped-zen","skipped-ind","skipped-fuse");
+our @TOparal = ("paral-res","paral-cap","paral-jmp","paral-dio","paral-zen","paral-ind","paral-fuse");
 
 ##########################################################################################
 print "\n";
@@ -686,29 +779,27 @@ foreach my $device (@bom_list)
 
 	#print $testorder{$device},"\n";
 	#print $testplan{$device},"\n";
-	################ testable device ##############################################################################################
+	################ testable device #####################################################
 	if(exists($testplan{$device})
 	and substr($testplan{$device},0,6) eq "tested"
-	and ($testorder{$device} eq "tested-res"
-	or $testorder{$device} eq "tested-cap"
-	or $testorder{$device} eq "tested-jmp"
-	or $testorder{$device} eq "tested-dio"
-	or $testorder{$device} eq "tested-zen"
-	or $testorder{$device} eq "tested-ind"
-	or $testorder{$device} eq "tested-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			General AnaTest		", $device."\n";   #, $lineTO,"\n";
-		@array = ("-","-","-","-");
+		print "			General AnaTest		", $device."\n";
+		@array = ("-","-","-","-","-");
 		$array_ref = \@array;
 		$tested-> write_row($rowT, 2, $array_ref, $format_data);
 	
 		$UNCover = 1;
 		$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 		$row_ver = $rowT;
-		open(SourceFile, "<analog/$device") or open(SourceFile, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
-		if ($! eq "No such file or directory"){$tested-> write($rowT, 5, "TestFile not found.", $format_anno1);}
+		
+		#$value = read_value(uc($device));
+		$value = '-';
+		if(exists($bom_value{uc($device)})){$value = $bom_value{uc($device)};} #print "$device value is: $bom_value{uc($device)} \n"; }
+		
+		open(SourceFile, "<analog/$device") or open(SourceFile, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+		if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 		else
 		{
 		while($lineTF = <SourceFile>)							#read parameter
@@ -717,69 +808,99 @@ foreach my $device (@bom_list)
 			chomp($lineTF);
 			$lineTF =~ s/^ +//;                               	#clear head of line spacing
 			#print $lineTF;
-			if (substr($lineTF,0,8) eq "resistor")				#### matching resistor ########
+			my @list = split('\ ', $lineTF, 2);
+			#print $list[0],"\n";
+			#print $list[1],"\n";
+			#print $value,"\n";
+
+			if (grep{ $_ eq $testorder{$device}} @Paral and $lineTF =~ "report parallel devices")
+			{
+				while($lineTF = <SourceFile>)
+				{
+					chomp($lineTF);
+					$lineTF =~ s/^ +//;
+					$lineTF =~ s/( +)/ /g;
+					last if ($lineTF =~ "end on failure");
+					#print $lineTF,"\n";
+					my @Vlist = split('\ ', $lineTF);
+					#print substr($Vlist[2],-2,1),substr($value,-1,1),"\n";
+
+					if(substr($value,-1,1) eq "m" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."m";}
+					if(substr($value,-1,1) eq "m" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."m";}
+
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."u";}
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."u";}
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."u";}
+
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000000)."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "p") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."n";}
+
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "p") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."p";}
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000000)."p";}
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."p";}
+
+					if(substr($value,-1,1) =~ '\d' and substr($Vlist[2],-2,1) =~ '\d') {$value = ($value * substr($Vlist[2],0,-1))/($value + substr($Vlist[2],0,-1));}		# ok
+					if(substr($value,-1,1) =~ '\d' and substr($Vlist[2],-2,1) eq "k") {$value = ($value * substr($Vlist[2],0,-2)*1000)/($value + substr($Vlist[2],0,-2)*1000);}	#ok
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) =~ '\d') {$value = ((substr($value,0,-1)*1000) * substr($Vlist[2],0,-1))/((substr($value,0,-1)*1000) + substr($Vlist[2],0,-1));}	#ok
+					
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) eq "k") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."k";}	#ok
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2)*1000)/(substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."k";}	#ok
+					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "k") {$value = ((substr($value,0,-1)*1000) * substr($Vlist[2],0,-2))/((substr($value,0,-1)*1000) + substr($Vlist[2],0,-2))."k";}
+
+					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
+					}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
+				
+				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
+				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
+				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
+				}
+			
+			if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)						## matching type ##
 			{
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,8), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,9));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
+				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
+				$tested-> write($rowT, 2, $value, $format_data);  							## BOMvalue ##
+
+				$tested->conditional_formatting($rowT, 3,
+				{
+					type     => 'cell',
+					criteria => 'not equal to',
+					value    => $value,
+					format   => $format_VCC,
+					});
+
+				@param =  split('\,', $list[1]);
+				$tested-> write($rowT, 3, $param[0], $format_data);  						## Nominal ## 
+				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  	## HiLimit ##
+				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  	## HiLimit ##
+				if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  	## LoLimit ##
+				if($param[2] > 40){$tested-> write($rowT, 5, $param[2], $format_STP);}		## LoLimit ##
+				$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  	## Comment ##
 				$rowT++;
 				goto Next_Ori;
 				}
-			elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
+			elsif ($list[0] eq "diode")														## matching type ##
 			{
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,9), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,10));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-				$rowT++;
-				goto Next_Ori;
-				}
-			elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
-			{
-				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,8), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,9));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-				$rowT++;
-				goto Next_Ori;
-				}
-			elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
-			{
-				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,5), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
-				if ($lineTF !~ m/\"/g){
-				#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
-				$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-				}
+				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
+				@param =  split('\,', $list[1]);
+				if ($lineTF !~ m/\"/g)
+				{
+					$tested-> write($rowT, 4, $param[0], $format_data);  					## HiLimit ##
+					$tested-> write($rowT, 5, $param[1], $format_data);	  					## LoLimit ##
+					$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  ## Comment ##
+					}
 				if ($lineTF =~ m/\"/g)
 				{
-					$DioNom = "";	$DioNom =  $DioNom . $param[0];  							## Nominal ## 
-					$DioHiL = "";	$DioHiL =  $DioHiL . $param[1];  							## HiLimit ##
-					$DioLoL = "";	$DioLoL =  $DioLoL . $param[2];	  							## LoLimit ##
-					$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
+					$DioNom = "";	$DioNom =  $DioNom . $param[0];  						## Nominal ## 
+					$DioHiL = "";	$DioHiL =  $DioHiL . $param[1];  						## HiLimit ##
+					$DioLoL = "";	$DioLoL =  $DioLoL . $param[2];	  						## LoLimit ##
+					$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  ## Comment ##
 					while($lineTF = <SourceFile>)
 					{
 						chomp($lineTF);
@@ -788,15 +909,15 @@ foreach my $device (@bom_list)
 						{
 							#print $lineTF."\n";
 							@param =  split('\,', substr($lineTF,6));
-							$DioNom =  $DioNom . "\n" . $param[0];  							## Nominal ## 
-							$DioHiL =  $DioHiL . "\n" . $param[1];  							## HiLimit ##
-							$DioLoL =  $DioLoL . "\n" . $param[2];	  							## LoLimit ##
+							$DioNom =  $DioNom . "\n" . $param[0];  						## Nominal ## 
+							$DioHiL =  $DioHiL . "\n" . $param[1];  						## HiLimit ##
+							$DioLoL =  $DioLoL . "\n" . $param[2];	  						## LoLimit ##
 							}
 						elsif (eof)
 						{
-							$tested-> write($rowT, 2, $DioNom, $format_data);  					## Nominal ## 
-							$tested-> write($rowT, 3, $DioHiL, $format_data);  					## HiLimit ##
-							$tested-> write($rowT, 4, $DioLoL, $format_data);	  				## LoLimit ##
+							$tested-> write($rowT, 3, $DioNom, $format_data);  				## Nominal ## 
+							$tested-> write($rowT, 4, $DioHiL, $format_data);  				## HiLimit ##
+							$tested-> write($rowT, 5, $DioLoL, $format_data);	  			## LoLimit ##
 							last;
 							}
 						}
@@ -804,81 +925,59 @@ foreach my $device (@bom_list)
 				$rowT++;
 				goto Next_Ori;
 				}
-			elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
+			elsif ($list[0] eq "jumper")													## matching type ##
 			{
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,5), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-				$rowT++;
-				goto Next_Ori;
-				}
-			elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
-			{
-				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,6), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
+				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
+				if($value eq '-'){$tested-> write($rowT, 2, $value, $format_data);}  		## BOMvalue ##
+				elsif((substr($value,-1,1) =~ '\d') and $value < 10){$tested-> write($rowT, 2, $value, $format_data);}
+				else{$tested-> write($rowT, 2, $value, $format_VCC);}
+				@param =  split('\,', $list[1]);
 				$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-				if($OP == 0){$tested-> write($rowT, 3, $param[0], $format_data);	$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);}  ## Excel ##
-				if($OP == 1){$tested-> write($rowT, 4, $param[0], $format_STP);	$tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
+				if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}  ## Excel ##
+				if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
 				$rowT++;
 				goto Next_Ori;
 				}
-			elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
+			elsif ($list[0] eq "fuse")					  									## matching type ##
 			{
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,6), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
-				$tested-> write($rowT, 3, $param[0], $format_data);
-				$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  ## Excel ##
+				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
+				@param =  split('\,', $list[1]);
+				$tested-> write($rowT, 4, $param[0], $format_data);
+				$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  	## Excel ##
 				$rowT++;
 				goto Next_Ori;
 				}
-			elsif (eof and $foundTO == 1)					  			####no parameter######
+			elsif (eof and $foundTO == 1)					  								## no parameter ##
 			{
-				$tested-> write($rowT, 0, $device, $format_item);  ## Excel ##
-				$tested-> write($rowT, 1, "[base ver]", $format_data);  				## TestType ##
-				$tested-> write($rowT, 5, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
+				$tested-> write($rowT, 0, $device, $format_item); 									## Excel ##
+				$tested-> write($rowT, 1, "[base ver]", $format_data);  							## TestType ##
+				$tested-> write($rowT, 6, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
 				$rowT++;
 				goto Next_Ori;
 				}
 			}}
-			Next_Ori:
-	################ testable device [sub-versions] ###############################################################################
+		Next_Ori:
+	################ testable device [sub-versions] ######################################
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$device}))
 		{
 			if(substr($testplan{$device},0,6) eq "tested"
-			and ($testorder{$versions[$v]."+".$device} eq "tested-res+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-cap+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-jmp+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-dio+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-zen+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-ind+ver"
-			or $testorder{$versions[$v]."+".$device} eq "tested-fuse+ver")
-			)
+			and grep{ $_ eq $testorder{$versions[$v]."+".$device}} @TOtestedver)
 			{
 				$foundTO = 1;
-				#print $testorder{$versions[$v]."+".$device}."\n";
-				print "			General AnaVTest	", $device." - [$versions[$v]]\n";   #, $lineTO,"\n";
-				@array = ("-","-","-","-");
+				print "			General AnaVTest	", $device." - [$versions[$v]]\n";
+				@array = ("-","-","-","-","-");
 				$array_ref = \@array;
 				$tested-> write_row($rowT, 2, $array_ref, $format_data);
 			
 				$UNCover = 1;
 				$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 	
-				open(SourceFile, "<$versions[$v]/analog/$device") or open(SourceFile, "<$versions[$v]/analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
-				if ($! eq "No such file or directory"){$tested-> write($rowT, 5, "TestFile not found.", $format_anno1);}
+				open(SourceFile, "<$versions[$v]/analog/$device") or open(SourceFile, "<$versions[$v]/analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+				if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 				else
 				{
 				while($lineTF = <SourceFile>)							#read parameter
@@ -887,76 +986,43 @@ foreach my $device (@bom_list)
 					chomp($lineTF);
 					$lineTF =~ s/^ +//;                               	#clear head of line spacing
 					#print $lineTF;
-					if (substr($lineTF,0,8) eq "resistor")				#### matching resistor ########
+					
+					my @list = split('\ ', $lineTF, 2);
+					
+					if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)							## matching type ##
 					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,8), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,9));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
+						$tested-> write($rowT, 3, $param[0], $format_data);  							## Nominal ## 
+						if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  		## HiLimit ##
+						if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  		## HiLimit ##
+						if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  		## LoLimit ##
+						if($param[2] > 40){$tested-> write($rowT, 5, $param[2], $format_STP);}			## LoLimit ##
+						$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  		## Comment ##
 						$rowT++;
 						goto Next_Rev;
 						}
-					elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
+					elsif ($list[0] eq "diode")															## matching type ##
 					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,9), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,10));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-						$rowT++;
-						goto Next_Rev;
-						}
-					elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
-					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,8), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,9));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-						$rowT++;
-						goto Next_Rev;
-						}
-					elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
-					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,5), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
 						if ($lineTF !~ m/\"/g){
-						#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
-						$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
+						$tested-> write($rowT, 4, $param[0], $format_data);  							## HiLimit ##
+						$tested-> write($rowT, 5, $param[1], $format_data);	  							## LoLimit ##
+						$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  		## Comment ##
 						}
 						if ($lineTF =~ m/\"/g)
 						{
 							$DioNom = "";	$DioNom =  $DioNom . $param[0];  							## Nominal ## 
 							$DioHiL = "";	$DioHiL =  $DioHiL . $param[1];  							## HiLimit ##
 							$DioLoL = "";	$DioLoL =  $DioLoL . $param[2];	  							## LoLimit ##
-							$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
+							$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  	## Comment ##
 							while($lineTF = <SourceFile>)
 							{
 								chomp($lineTF);
 								$lineTF =~ s/^ +//;
 								if (substr($lineTF,0,5) eq "diode")
 								{
-									#print $lineTF."\n";
 									@param =  split('\,', substr($lineTF,6));
 									$DioNom =  $DioNom . "\n" . $param[0];  							## Nominal ## 
 									$DioHiL =  $DioHiL . "\n" . $param[1];  							## HiLimit ##
@@ -964,9 +1030,9 @@ foreach my $device (@bom_list)
 									}
 								elsif (eof)
 								{
-									$tested-> write($rowT, 2, $DioNom, $format_data);  					## Nominal ## 
-									$tested-> write($rowT, 3, $DioHiL, $format_data);  					## HiLimit ##
-									$tested-> write($rowT, 4, $DioLoL, $format_data);	  				## LoLimit ##
+									$tested-> write($rowT, 3, $DioNom, $format_data);  					## Nominal ## 
+									$tested-> write($rowT, 4, $DioHiL, $format_data);  					## HiLimit ##
+									$tested-> write($rowT, 5, $DioLoL, $format_data);	  				## LoLimit ##
 									last;
 									}
 								}
@@ -974,73 +1040,46 @@ foreach my $device (@bom_list)
 						$rowT++;
 						goto Next_Rev;
 						}
-					elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
+					elsif ($list[0] eq "jumper")														## matching type ##
 					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,5), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  	## Comment ##
-						$rowT++;
-						goto Next_Rev;
-						}
-					elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
-					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,6), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
 						$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-						if($OP == 0){$tested-> write($rowT, 3, $param[0], $format_data);	$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);}  ## Excel ##
-						if($OP == 1){$tested-> write($rowT, 4, $param[0], $format_STP);	$tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
+						if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}  ## Excel ##
+						if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
 						$rowT++;
 						goto Next_Rev;
 						}
-					elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
+					elsif ($list[0] eq "fuse")					  										## matching type ##
 					{
-						#$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,6), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
-						$tested-> write($rowT, 3, $param[0], $format_data);
-						$tested-> write($rowT, 5, substr($testplan{$device},6), $format_anno);  ## Excel ##
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
+						$tested-> write($rowT, 4, $param[0], $format_data);
+						$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);  		## Excel ##
 						$rowT++;
 						goto Next_Rev;
 						}
-					elsif (eof and $foundTO == 1)					  			####no parameter######
+					elsif (eof and $foundTO == 1)					  										## no parameter ##
 					{
-						#$tested-> write($rowT, 0, $device, $format_item);  								## TestName ##
 						$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  					## TestType ##
-						$tested-> write($rowT, 5, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
+						$tested-> write($rowT, 6, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
 						$rowT++;
 						goto Next_Rev;
 						}
 					}}
-					Next_Rev:
+				Next_Rev:
 				}
-	################ testorder skipped devices [sub-version] ######################################################################
-			elsif($testorder{$versions[$v]."+".$device} eq "untest-res+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-cap+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-jmp+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-dio+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-zen+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-ind+ver"
-			or $testorder{$versions[$v]."+".$device} eq "untest-fuse+ver"
-			)
+	################ testorder skipped devices [sub-version] #############################
+			elsif(grep{ $_ eq $testorder{$versions[$v]."+".$device}} @TOuntestver)
 			{
 				$foundTO = 1;
-				print "			General NullTest	", $device." - [$versions[$v]]\n";    #, $lineTO,"\n";
-				$tested-> write($rowT, 0, $device, $format_data);  ## Excel ##
-				$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  					## TestType ##
-					@array = ("-","-","-");
+				print "			General NullTest	", $device." - [$versions[$v]]\n";
+				$tested-> write($rowT, 0, $device, $format_data);
+				$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  							## TestType ##
+					@array = ("-","-","-","-");
 					$array_ref = \@array;
 					$tested-> write_row($rowT, 2, $array_ref, $format_data);
-				$tested-> write($rowT, 5, "test is skipped in version [$versions[$v]]", $format_anno1);  		## Excel ##
+				$tested-> write($rowT, 6, "test is skipped in version [$versions[$v]]", $format_anno1);  	## Excel ##
 				$rowT++;
 				}
 			}
@@ -1048,68 +1087,47 @@ foreach my $device (@bom_list)
 	if ($rowT - $row_ver > 1){$tested-> merge_range($row_ver, 0, $rowT-1, 0, $device, $format_item);}
 	}
 
-	################ testplan skipped devices ########################################################################################
+	################ testplan skipped devices ############################################
 	elsif (exists($testplan{$device})
 	and substr($testplan{$device},0,7) eq "skipped"
-	and ($testorder{$device} eq "tested-res"
-	or $testorder{$device} eq "tested-cap"
-	or $testorder{$device} eq "tested-jmp"
-	or $testorder{$device} eq "tested-dio"
-	or $testorder{$device} eq "tested-zen"
-	or $testorder{$device} eq "tested-ind"
-	or $testorder{$device} eq "tested-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			General SkipTest	", $device,"\n";   #, $lineTO,"\n";
-		if ($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
-		$untest-> write($rowU, 0, $device, $format_data);		## Excel ##
-		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  ## Excel ##
-		$untest-> write($rowU, 2, substr($testplan{$device},8), $format_anno);  ## Excel ##
+		print "			General SkipTest	", $device,"\n";
+		if ($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}					#Coverage
+		$untest-> write($rowU, 0, $device, $format_data);
+		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  			## Excel ##
+		$untest-> write($rowU, 2, substr($testplan{$device},8), $format_anno);  			## Excel ##
 		$rowU++;
 		next; #goto Next_Dev;
 		}
-	################ testplan inexistent devices #####################################################################################
+	################ testplan inexistent devices #########################################
 	elsif (not exists($testplan{$device})
 	and exists($testorder{$device})
-	and ($testorder{$device} eq "tested-res"
-	or $testorder{$device} eq "tested-cap"
-	or $testorder{$device} eq "tested-jmp"
-	or $testorder{$device} eq "tested-dio"
-	or $testorder{$device} eq "tested-zen"
-	or $testorder{$device} eq "tested-ind"
-	or $testorder{$device} eq "tested-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			Testplan InExistent	", $device,"\n";   #, $lineTO,"\n";
-		if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
-		$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+		print "			Testplan InExistent	", $device,"\n";
+		if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}					#Coverage
+		$untest-> write($rowU, 0, $device, $format_data);									## Excel ##
 		$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
-		$untest-> write($rowU, 2, $testorder{$device}, $format_anno);					## Excel ##
+		$untest-> write($rowU, 2, $testorder{$device}, $format_anno);						## Excel ##
 		$rowU++;
 		next; #goto Next_Dev;
 		}
-	################ testorder Nulltest devices ######################################################################################
+	################ testorder Nulltest devices ##########################################
 	elsif(exists($testorder{$device})
-	and($testorder{$device} eq "untest-res"
-	or $testorder{$device} eq "untest-cap"
-	or $testorder{$device} eq "untest-jmp"
-	or $testorder{$device} eq "untest-dio"
-	or $testorder{$device} eq "untest-zen"
-	or $testorder{$device} eq "untest-ind"
-	or $testorder{$device} eq "untest-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOuntest)
 	{
 		$foundTO = 1;
-		print "			General NullTest	", $device,"\n";   #, $lineTO,"\n";
-		$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_anno);  ## Excel ##
+		print "			General NullTest	", $device,"\n";
+		$untest-> write($rowU, 0, $device, $format_data);
+		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_anno);
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}					#Coverage
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1134,26 +1152,19 @@ foreach my $device (@bom_list)
 		close ALL;
 		#next; #goto Next_Dev;
 		}
-	################ testorder skipped devices #######################################################################################
+	################ testorder skipped devices ###########################################
 	elsif(exists($testorder{$device})
-	and($testorder{$device} eq "skipped-res"
-	or $testorder{$device} eq "skipped-cap"
-	or $testorder{$device} eq "skipped-jmp"
-	or $testorder{$device} eq "skipped-dio"
-	or $testorder{$device} eq "skipped-zen"
-	or $testorder{$device} eq "skipped-ind"
-	or $testorder{$device} eq "skipped-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOskipped)
 	{
 		$foundTO = 1;
-		print "			General Skipped		", $device,"\n";   #, $lineTO,"\n";
+		print "			General Skipped		", $device,"\n";
 		$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  ## Excel ##
+		$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  			## Excel ##
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}					#Coverage
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1178,19 +1189,12 @@ foreach my $device (@bom_list)
 		close ALL;
 		#next; #goto Next_Dev;
 		}
-	################ parallel tested devices #########################################################################################
+	################ parallel tested devices #############################################
 	elsif(exists($testorder{$device})
-	and($testorder{$device} eq "paral-res"
-	or $testorder{$device} eq "paral-cap"
-	or $testorder{$device} eq "paral-jmp"
-	or $testorder{$device} eq "paral-dio"
-	or $testorder{$device} eq "paral-zen"
-	or $testorder{$device} eq "paral-ind"
-	or $testorder{$device} eq "paral-fuse")
-	)
+	and grep{ $_ eq $testorder{$device}} @TOparal)
 	{
 		$foundTO = 1;
-		print "			General ParalTest	", $device,"\n";		#, $lineTO,"\n";
+		print "			General ParalTest	", $device,"\n";
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}			#Coverage
 		$limited-> write($rowL, 0, $device, $format_data);		## Excel ##
@@ -1198,7 +1202,7 @@ foreach my $device (@bom_list)
 		$UTline = "";
 		$fileF = 0;
 		
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$limited-> write($rowL, 1, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1223,13 +1227,13 @@ foreach my $device (@bom_list)
 		close ALL;
 		goto Next_Dev;
 		}
-	################ testable analog powered test #################################################################################
+	################ testable analog powered test ########################################
 	elsif(exists($testorder{$device})
 	and ($testorder{$device} eq "tested-pwr" or $testorder{$device} eq "untest-pwr")
 	)
 	{
 		$foundTO = 1;
-		print "			General PwrTest		", $device,"\n";   #, $lineTO,"\n";
+		print "			General PwrTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1239,29 +1243,29 @@ foreach my $device (@bom_list)
 			if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_data);								# Coverage
-				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);	## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+				$coverage-> write($rowC, 3, 'V', $format_data);											# Coverage
+				$power-> write($rowP, 0, $device, $format_data);										## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);							## Excel ##
 				}
 			elsif (exists($testplan{$device}) and substr($testplan{$device},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}				#Coverage
-				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}						#Coverage
+				$power-> write($rowP, 0, $device, $format_data);										## Excel ##
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
 				}
 			elsif(not exists($testplan{$device}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 0, $device, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);	## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}						#Coverage
+				$power-> write($rowP, 0, $device, $format_data);										## Excel ##
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Unidentified in Testplan.", $format_VCC);
 				}
 			
 		if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 		{
-			open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t!!! Failed to open '$device' file: $!.\n";
+			open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -1315,26 +1319,27 @@ foreach my $device (@bom_list)
 			$content = join("",@testname);
 			$content =~ s/(^\s+|\s+$)//g;
 			$power-> write($rowP, 3, $content, $format_anno);
+			if($content eq ""){$power-> write($rowP, 3, "NO valid test found.", $format_anno1);}
 			}
 		$rowP++;
 		}
 			
 		elsif($testorder{$device} eq "untest-pwr")
 		{
-			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-			$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
-			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
+			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
+			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
+			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  					## Excel ##
 			$rowU++;
 			}
 		}
-	################ analog powered [sub-version] #############################################################################
+	################ analog powered [sub-version] ########################################
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$device}) and substr($testorder{$versions[$v]."+".$device},7,7) eq "pwr+ver")
 		{
 		$foundTO = 1;
-		print "			General PwrVTest	", $device." - [$versions[$v]]\n";   #, $lineTO,"\n";
+		print "			General PwrVTest	", $device." - [$versions[$v]]\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1345,26 +1350,26 @@ foreach my $device (@bom_list)
 				if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 				{
 					$cover = 1;
-					$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
+					$coverage-> write($rowC, 3, 'V', $format_data);												#Coverage
 					$power-> write($rowP, 1, "tested-pwr - ".$device." - [".$versions[$v]."]", $format_anno);	## Excel ##
-					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);								## Excel ##
 					}
 				elsif(exists($testplan{$device}) and substr($testplan{$device},0,7) eq "skipped")
 				{
-					if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}			#Coverage
-					$power-> write($rowP, 1, "tested-pwr - ".$device." - [".$versions[$v]."]", $format_anno);				## Excel ##
-					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}							#Coverage
+					$power-> write($rowP, 1, "tested-pwr - ".$device." - [".$versions[$v]."]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
 					}
 				elsif(not exists($testplan{$device}))
 				{
-					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-					$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);	## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}							#Coverage
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);					## Excel ##
 					$power-> write($rowP, 2, "Unidentified in Testplan.", $format_VCC);
 					}
 				
 			if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 			{
-				open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t!!! Failed to open '$device' file: $!.\n";
+				open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 				if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -1418,27 +1423,28 @@ foreach my $device (@bom_list)
 				$content = join("",@testname);
 				$content =~ s/(^\s+|\s+$)//g;
 				$power-> write($rowP, 3, $content, $format_anno);
+				if($content eq ""){$power-> write($rowP, 3, "NO valid test found.", $format_anno1);}
 				}
 			$rowP++;
 			}
 
 			elsif($testorder{$versions[$v]."+".$device} eq "untest-pwr+ver")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);				## Excel ##
-				$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}						#Coverage
+				$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);	## Excel ##
+				$power-> write($rowP, 2, "-", $format_data);											## Excel ##
 				$rowP++;
 				}
 			}
 		}
-	################ testable digital test ########################################################################################
+	################ testable digital test ###############################################
 	if(exists($testorder{$device})
 	and ($testorder{$device} eq "tested-dig" or $testorder{$device} eq "untest-dig")
 	)
 	{			
 		$foundTO = 1;
 		$length_DigPin = 10;
-		print "			General DigiTest	", $device,"\n";   #, $lineTO,"\n";
+		print "			General DigiTest	", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1448,20 +1454,20 @@ foreach my $device (@bom_list)
 			if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);	## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+				$coverage-> write($rowC, 2, 'V', $format_data);										#Coverage
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);			## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);						## Excel ##
 				}
 			elsif (exists($testplan{$device}) and substr($testplan{$device},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}					#Coverage
 				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);			## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);	## Excel ##
 				}
 			elsif(not exists($testplan{$device}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
-				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);		## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}					#Coverage
+				$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);			## Excel ##
 				$power-> write($rowP, 2, "Unidentified in Testplan.", $format_VCC);
 				}
 			
@@ -1524,7 +1530,8 @@ foreach my $device (@bom_list)
 										}
 									$GND_Pin++;
 									}
-								elsif ($DigPin[1] =~ /(^\+0|^0V|^\+1|^1V|^\+2|^2V|^\+3|^3V|^\+5|^5V|^V_|^VCC|^VDD|^PP|^P0V|^P1V|^P2V|^P3V|^P5V)/)
+								#elsif ($DigPin[1] =~ /(^\+0|^0V|^\+1|^1V|^\+2|^2V|^\+3|^3V|^\+5|^5V|^V_|^VCC|^VDD|^PP|^P0V|^P1V|^P2V|^P3V|^P5V)/)
+								elsif ($DigPin[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 								{
 									if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_VCC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
 									if ($DigPin[0] =~ /^\D/i)
@@ -1618,10 +1625,10 @@ foreach my $device (@bom_list)
   			close Boards;}
 
 			###### hyperlink #####################################
-			$power-> write($rowP, 0, $device, $format_hylk);  			## Excel ##
+			$power-> write($rowP, 0, $device, $format_hylk);
 
 			$family = "";
-  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
+  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -1643,20 +1650,20 @@ foreach my $device (@bom_list)
 
 		elsif($testorder{$device} eq "untest-dig")
 		{
-			if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
-			$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
-			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
+			if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
+			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
+			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  					## Excel ##
 			$rowU++;
 			}
 		}
-	################ digital [sub-version] ########################################################################################
+	################ digital [sub-version] ###############################################
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$device}) and substr($testorder{$versions[$v]."+".$device},7,7) eq "dig+ver")
 		{
 		$foundTO = 1;
-		print "			General DigVTest	",$device," - [$versions[$v]]\n";   #, $lineTO,"\n";
+		print "			General DigVTest	",$device," - [$versions[$v]]\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1666,40 +1673,40 @@ foreach my $device (@bom_list)
 				if(exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 				{
 					$cover = 1;
-					$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
+					$coverage-> write($rowC, 2, 'V', $format_data);												#Coverage
 					$power-> write($rowP, 1, "tested-dig - ".$device." - [".$versions[$v]."]", $format_anno);	## Excel ##
-					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$device, $format_anno);								## Excel ##
 					}
 				elsif(exists($testplan{$device}) and substr($testplan{$device},0,7) eq "skipped")
 				{
-					if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}			#Coverage
-					$power-> write($rowP, 1, "tested-dig - ".$device." - [".$versions[$v]."]", $format_anno);				## Excel ##
-					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}					#Coverage
+					$power-> write($rowP, 1, "tested-dig - ".$device." - [".$versions[$v]."]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);	## Excel ##
 					}
 				elsif(not exists($testplan{$device}))
 				{
-					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
-					$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);	## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}					#Coverage
+					$power-> write($rowP, 1, $testorder{$device}." - ".$device, $format_anno);			## Excel ##
 					$power-> write($rowP, 2, "Unidentified in Testplan.", $format_VCC);
 					}
 				$rowP++;
 				}
 			elsif($testorder{$versions[$v]."+".$device} eq "untest-dig+ver")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);## Excel ##
-				$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}						#Coverage
+				$power-> write($rowP, 1, "Skipped - $device -ver: [".$versions[$v]."]", $format_anno1);	## Excel ##
+				$power-> write($rowP, 2, "-", $format_data);											## Excel ##
 				$rowP++;
 				}
 			}
 		}
-	################ testable mixed test ##########################################################################################
+	################ testable mixed test #################################################
 	if(exists($testorder{$device})
 	and ($testorder{$device} eq "tested-mix" or $testorder{$device} eq "untest-mix")
 	)
 	{
 		$foundTO = 1;
-		print "			General MixTest		", $device,"\n";   #, $lineTO,"\n";
+		print "			General MixTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1732,21 +1739,21 @@ foreach my $device (@bom_list)
 			}
 		elsif($testorder{$device} eq "untest-mix")
 		{
-			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			# Coverage
-			$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
-			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
+			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				# Coverage
+			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
+			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  					## Excel ##
 			$rowU++;
 			}
 		}
-	################ testable Bscan device ########################################################################################
+	################ testable Bscan device ###############################################
 	elsif(exists($testorder{$device})
 	and ($testorder{$device} eq "tested-bscan" or $testorder{$device} eq "untest-bscan")
 	)
 	{
 		$foundTO = 1;
 		$length_SNail = 10;
-		print "			General BscTest	", $device,"\n";   #, $lineTO,"\n";
+		print "			General BscTest	", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 4, $array_ref, $format_data);
@@ -1757,25 +1764,25 @@ foreach my $device (@bom_list)
 			if(exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);				## Excel ##
+				$coverage-> write($rowC, 4, 'V', $format_data);											#Coverage
+				$power-> write($rowP, 1, $testorder{$device}, $format_anno);							## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$device, $format_anno);							## Excel ##
 				}
 			elsif(exists($testplan{$device}) and substr($testplan{$device},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}			#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);			## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}						#Coverage
+				$power-> write($rowP, 1, $testorder{$device}, $format_anno);							## Excel ##
+				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$device},8), $format_anno1);		## Excel ##
 				}
 			elsif(not exists($testplan{$device}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
-				$power-> write($rowP, 1, $testorder{$device}, $format_anno);  				## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}						#Coverage
+				$power-> write($rowP, 1, $testorder{$device}, $format_anno);  							## Excel ##
 				$power-> write($rowP, 2, "Unidentified in Testplan.", $format_VCC);
 				}
 
-			###### hyperlink #####################################
-			$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');    	## hyperlink
+			###### hyperlink #############################################################
+			$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');    		## hyperlink
 
 			if ($worksheet == 0)
 			{
@@ -1833,7 +1840,7 @@ foreach my $device (@bom_list)
 											}
 										$GND_Pin++;
 										}
-									elsif ($BscanNail[1] =~ /(^\+0|^0V|^\+1|^1V|^\+2|^2V|^\+3|^3V|^\+5|^5V|^V_|^VCC|^VDD|^PP|^P0V|^P1V|^P2V|^P3V|^P5V)/)
+									elsif ($BscanNail[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 									{
 										if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_VCC); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail+2);}
 										if ($BscanNail[0] =~ /^\D/i)
@@ -1905,11 +1912,11 @@ foreach my $device (@bom_list)
   				close Boards;
   				}
 
-			###### hyperlink #####################################
+			###### hyperlink #############################################################
 			$power-> write($rowP, 0, $device, $format_hylk);  				## Excel ##
 			
 			$family = "";
-  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
+  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -1954,16 +1961,16 @@ foreach my $device (@bom_list)
 
 		elsif($testorder{$device} eq "untest-bscan")
 		{
-			if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
-			$untest-> write($rowU, 0, $device, $format_data);							## Excel ##
-			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  	## Excel ##
-			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  				## Excel ##
+			if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
+			$untest-> write($rowU, 0, $device, $format_data);								## Excel ##
+			$untest-> write($rowU, 1, "been skipped in TestOrder.", $format_anno1);  		## Excel ##
+			$untest-> write($rowU, 2, $testorder{$device}, $format_anno);  					## Excel ##
 			$rowU++;
 			}
 	
 		}
 
-   #~~~~~~~~~~~~~~~ Multiple Test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   #~~~~~~~~~~~~~~~ Multiple Test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	if ($foundTO == 0
 	or $testorder{$device} eq "tested-mix" or $testorder{$device} eq "untest-mix"
 	or $testorder{$device} eq "tested-pwr" or $testorder{$device} eq "untest-pwr"
@@ -1983,21 +1990,14 @@ foreach my $device (@bom_list)
 			$Mult_file = $keysTO[$i];
 			#print $Mult_file,"\n";
 			#print $testorder{$versions[0]."+".$Mult_file},"\n";
-	#%%%%%%%%%%%%%%% testable device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testable device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	if(exists($testplan{$Mult_file})
 	and substr($testplan{$Mult_file},0,6) eq "tested"
-	and ($testorder{$Mult_file} eq "tested-res"
-	or $testorder{$Mult_file} eq "tested-cap"
-	or $testorder{$Mult_file} eq "tested-jmp"
-	or $testorder{$Mult_file} eq "tested-dio"
-	or $testorder{$Mult_file} eq "tested-zen"
-	or $testorder{$Mult_file} eq "tested-ind"
-	or $testorder{$Mult_file} eq "tested-fuse")
-	)
+	and grep{ $_ eq $testorder{$Mult_file}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			Multiple AnaTest	", $Mult_file."\n";   #, $lineTO,"\n";
-		@array = ("-","-","-","-");
+		print "			Multiple AnaTest	", $Mult_file."\n";
+		@array = ("-","-","-","-","-");
 		$array_ref = \@array;
 		$tested-> write_row($rowT, 2, $array_ref, $format_data);
 		
@@ -2005,8 +2005,12 @@ foreach my $device (@bom_list)
 		$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 		$row_ver = $rowT;
 		
-		open(SourceFile, "<analog/$Mult_file") or open(SourceFile, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
-		if ($! eq "No such file or directory"){$tested-> write($rowT, 5, "TestFile not found.", $format_anno1);}
+		#$value = read_multi_value(uc($device));
+		$value = '-';
+		if(exists($bom_value{uc($device)})){$value = $bom_value{uc($device)};} #print "$device value is: $bom_value{uc($device)} \n"; }
+		
+		open(SourceFile, "<analog/$Mult_file") or open(SourceFile, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+		if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 		else
 		{
 		while($lineTF = <SourceFile>)							#read parameter
@@ -2015,70 +2019,98 @@ foreach my $device (@bom_list)
 			chomp($lineTF);
 			$lineTF =~ s/^ +//;                               	#clear head of line spacing
 			#print $lineTF;
-			if (substr($lineTF,0,8) eq "resistor")				#### matching resistor ########
+			my @list = split('\ ', $lineTF, 2);
+			#print $list[0],"\n";
+			#print $list[1],"\n";
+
+			if (grep{ $_ eq $testorder{$Mult_file}} @Paral and $lineTF =~ "report parallel devices")
 			{
-				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,8), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,9));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-				$rowT++;
-				last; #goto Next_Dev;
+				while($lineTF = <SourceFile>)
+				{
+					chomp($lineTF);
+					$lineTF =~ s/^ +//;
+					$lineTF =~ s/( +)/ /g;
+					last if ($lineTF =~ "end on failure");
+					#print $lineTF,"\n";
+					my @Vlist = split('\ ', $lineTF);
+					#print substr($Vlist[2],-2,1),substr($value,-1,1),"\n";
+
+					if(substr($value,-1,1) eq "m" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."m";}
+					if(substr($value,-1,1) eq "m" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."m";}
+
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."u";}
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."u";}
+					if(substr($value,-1,1) eq "u" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."u";}
+
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "m") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000000)."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."n";}
+					if(substr($value,-1,1) eq "n" and substr($Vlist[2],-2,1) eq "p") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)/1000)."n";}
+
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "p") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2))."p";}
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "u") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000000)."p";}
+					if(substr($value,-1,1) eq "p" and substr($Vlist[2],-2,1) eq "n") {$value = (substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."p";}
+
+					if(substr($value,-1,1) =~ '\d' and substr($Vlist[2],-2,1) =~ '\d') {$value = ($value * substr($Vlist[2],0,-1))/($value + substr($Vlist[2],0,-1));}		# ok
+					if(substr($value,-1,1) =~ '\d' and substr($Vlist[2],-2,1) eq "k") {$value = ($value * substr($Vlist[2],0,-2)*1000)/($value + substr($Vlist[2],0,-2)*1000);}	#ok
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) =~ '\d') {$value = ((substr($value,0,-1)*1000) * substr($Vlist[2],0,-1))/((substr($value,0,-1)*1000) + substr($Vlist[2],0,-1));}	#ok
+					
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) eq "k") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."k";}	#ok
+					if(substr($value,-1,1) eq "k" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2)*1000)/(substr($value,0,-1) + substr($Vlist[2],0,-2)*1000)."k";}	#ok
+					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "k") {$value = ((substr($value,0,-1)*1000) * substr($Vlist[2],0,-2))/((substr($value,0,-1)*1000) + substr($Vlist[2],0,-2))."k";}
+
+					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
+					}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
+				
+				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
+				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
+				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
 				}
-			elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
-			{
+
+			if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)							## matching type ##
+			{	
 				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,9), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,10));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-				$rowT++;
-				last; #goto Next_Dev;
-				}
-			elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
-			{
+				$tested-> write($rowT, 1, $list[0], $format_data);  							## TestType ##
+				$tested-> write($rowT, 2, $value, $format_data);  								## BOMvalue ##
+
+				$tested->conditional_formatting($rowT, 3,
+				{
+					type     => 'cell',
+					criteria => 'not equal to',
+					value    => $value,
+					format   => $format_VCC,
+					});
+
+				@param =  split('\,', $list[1]);	
+				$tested-> write($rowT, 3, $param[0], $format_data);  							## Nominal ## 
+				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  		## HiLimit ##
+				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  		## HiLimit ##
+				if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  		## LoLimit ##
+				if($param[2] > 40){$tested-> write($rowT, 5, $param[2], $format_STP);}			## LoLimit ##
+				$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  		## Comment ##
+				$rowT++;	
+				goto Next_Ori1;
+				}	
+			elsif ($list[0] eq "diode")															## matching type ##
+			{	
 				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,8), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,9));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-				$rowT++;
-				last; #goto Next_Dev;
-				}
-			elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
-			{
-				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,5), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
+				$tested-> write($rowT, 1, $list[0], $format_data);  							## TestType ##
+				@param =  split('\,', $list[1]);
 				if ($lineTF !~ m/\"/g)
 				{
-					#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-					$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
-					$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
-					$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
+					$tested-> write($rowT, 4, $param[0], $format_data);  						## HiLimit ##
+					$tested-> write($rowT, 5, $param[1], $format_data);	  						## LoLimit ##
+					$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
 					}
 				if ($lineTF =~ m/\"/g)
 				{
 					$DioNom = "";	$DioNom =  $DioNom . $param[0];  							## Nominal ## 
 					$DioHiL = "";	$DioHiL =  $DioHiL . $param[1];  							## HiLimit ##
 					$DioLoL = "";	$DioLoL =  $DioLoL . $param[2];	  							## LoLimit ##
-					$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
+					$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
 					while($lineTF = <SourceFile>)
 					{
 						chomp($lineTF);
@@ -2093,89 +2125,69 @@ foreach my $device (@bom_list)
 							}
 						elsif (eof)
 						{
-							$tested-> write($rowT, 2, $DioNom, $format_data);  					## Nominal ## 
-							$tested-> write($rowT, 3, $DioHiL, $format_data);  					## HiLimit ##
-							$tested-> write($rowT, 4, $DioLoL, $format_data);	  				## LoLimit ##
+							$tested-> write($rowT, 3, $DioNom, $format_data);  					## Nominal ## 
+							$tested-> write($rowT, 4, $DioHiL, $format_data);  					## HiLimit ##
+							$tested-> write($rowT, 5, $DioLoL, $format_data);	  				## LoLimit ##
 							last;
 							}
 						}
 					}
 				$rowT++;
-				last; #goto Next_Dev;
+				goto Next_Ori1;
 				}
-			elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
+			elsif ($list[0] eq "jumper")														## matching type ##
 			{
 				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,5), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
-				$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-				if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-				if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-				if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-				$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-				$rowT++;
-				last; #goto Next_Dev;
-				}
-			elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
-			{
-				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,6), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
+				$tested-> write($rowT, 1, $list[0], $format_data);  							## TestType ##
+				if($value eq '-'){$tested-> write($rowT, 2, $value, $format_data);}  			## BOMvalue ##
+				elsif((substr($value,-1,1) =~ '\d') and $value < 10){$tested-> write($rowT, 2, $value, $format_data);}
+				else{$tested-> write($rowT, 2, $value, $format_VCC);}
+				@param =  split('\,', $list[1]);
 				$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-				if($OP == 0){$tested-> write($rowT, 3, $param[0], $format_data);	$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);}  ## Excel ##
-				if($OP == 1){$tested-> write($rowT, 4, $param[0], $format_STP);	$tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
+				if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);}  ## Excel ##
+				if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
 				$rowT++;
-				last; #goto Next_Dev;
+				goto Next_Ori1;
 				}
-			elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
+			elsif ($list[0] eq "fuse")					  										## matching type ##
 			{
 				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-				$tested-> write($rowT, 1, substr($lineTF,0,6), $format_data);  				## TestType ##
-				#print substr($lineTF,9)."\n";
-				@param =  split('\,', substr($lineTF,6));
-				$tested-> write($rowT, 3, $param[0], $format_data);
-				$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  ## Excel ##
+				$tested-> write($rowT, 1, $list[0], $format_data);  							## TestType ##
+				@param =  split('\,', $list[1]);
+				$tested-> write($rowT, 4, $param[0], $format_data);
+				$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  		## Excel ##
 				$rowT++;
-				last; #goto Next_Dev;
+				goto Next_Ori1;
 				}
-			elsif (eof and $foundTO == 1)					  			####no parameter######
+			elsif (eof and $foundTO == 1)					  									## no parameter ##
 			{
-				$tested-> write($rowT, 0, $Mult_file, $format_item);  		## Excel ##
-				$tested-> write($rowT, 1, "[base ver]", $format_data);  				## TestType ##
-				$tested-> write($rowT, 5, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
+				$tested-> write($rowT, 0, $Mult_file, $format_item);  								## Excel ##
+				$tested-> write($rowT, 1, "[base ver]", $format_data);  							## TestType ##
+				$tested-> write($rowT, 6, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
 				$rowT++;
-				last; #goto Next_Dev;
+				goto Next_Ori1;
 				}
 			}}
-	#%%%%%%%%%%%%%%% testable device [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Next_Ori1:
+	#%%%%%%%%%%%%%%% testable device [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$Mult_file}))
 		{
-			if(substr($testplan{$keysTO[$i]},0,6) eq "tested"
-			and ($testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-res+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-cap+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-jmp+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-dio+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-zen+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-ind+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "tested-fuse+ver")
-			)
+			if(substr($testplan{$Mult_file},0,6) eq "tested"
+			and (grep{ $_ eq $testorder{$versions[$v]."+".$Mult_file}} @TOtestedver))
 			{
 				$foundTO = 1;
-				print "			Multiple AnaVTest	", $Mult_file." - [$versions[$v]]\n";   #, $lineTO,"\n";
-				@array = ("-","-","-","-");
+				print "			Multiple AnaVTest	", $Mult_file." - [$versions[$v]]\n";
+				@array = ("-","-","-","-","-");
 				$array_ref = \@array;
 				$tested-> write_row($rowT, 2, $array_ref, $format_data);
 				
 				$UNCover = 1;	
 				$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 	
-				open(SourceFile, "<$versions[$v]/analog/$Mult_file") or open(SourceFile, "<$versions[$v]/analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
-				if ($! eq "No such file or directory"){$tested-> write($rowT, 5, "TestFile not found.", $format_anno1);}
+				open(SourceFile, "<$versions[$v]/analog/$Mult_file") or open(SourceFile, "<$versions[$v]/analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+				if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 				else
 				{
 				while($lineTF = <SourceFile>)							#read parameter
@@ -2184,70 +2196,42 @@ foreach my $device (@bom_list)
 					chomp($lineTF);
 					$lineTF =~ s/^ +//;                               	#clear head of line spacing
 					#print $lineTF;
-					if (substr($lineTF,0,8) eq "resistor")				#### matching resistor ########
+					
+					my @list = split('\ ', $lineTF, 2);
+					#print $list[0],"\n";
+					#print $list[1],"\n";
+					
+					if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)							## matching type ##
 					{
 						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,8), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,9));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
+						$tested-> write($rowT, 3, $param[0], $format_data);  							## Nominal ## 
+						if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  		## HiLimit ##
+						if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  		## HiLimit ##
+						if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  		## LoLimit ##
+						if($param[2] > 40){$tested-> write($rowT, 5, $param[2], $format_STP);}			## LoLimit ##
+						$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  		## Comment ##
 						$rowT++;
-						last; #goto Next_Dev;
+						goto Next_Rev1;
 						}
-					elsif (substr($lineTF,0,9) eq "capacitor")				#### matching capacitor ########
+					elsif ($list[0] eq "diode")															## matching type ##
 					{
 						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,9), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,10));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-						$rowT++;
-						last; #goto Next_Dev;
-						}
-					elsif (substr($lineTF,0,8) eq "inductor")					#### matching inductor ########
-					{
-						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,8), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,9));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-						$rowT++;
-						last; #goto Next_Dev;
-						}
-					elsif (substr($lineTF,0,5) eq "diode")					#### matching diode ######
-					{
-						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,5), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
 						if ($lineTF !~ m/\"/g)
 						{
-							#$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-							$tested-> write($rowT, 3, $param[0], $format_data);  						## HiLimit ##
-							$tested-> write($rowT, 4, $param[1], $format_data);	  						## LoLimit ##
-							$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
+							$tested-> write($rowT, 4, $param[0], $format_data);  						## HiLimit ##
+							$tested-> write($rowT, 5, $param[1], $format_data);	  						## LoLimit ##
+							$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
 							}
 						if ($lineTF =~ m/\"/g)
 						{
 							$DioNom = "";	$DioNom =  $DioNom . $param[0];  							## Nominal ## 
 							$DioHiL = "";	$DioHiL =  $DioHiL . $param[1];  							## HiLimit ##
 							$DioLoL = "";	$DioLoL =  $DioLoL . $param[2];	  							## LoLimit ##
-							$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
+							$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
 							while($lineTF = <SourceFile>)
 							{
 								chomp($lineTF);
@@ -2262,81 +2246,58 @@ foreach my $device (@bom_list)
 									}
 								elsif (eof)
 								{
-									$tested-> write($rowT, 2, $DioNom, $format_data);  					## Nominal ## 
-									$tested-> write($rowT, 3, $DioHiL, $format_data);  					## HiLimit ##
-									$tested-> write($rowT, 4, $DioLoL, $format_data);	  				## LoLimit ##
+									$tested-> write($rowT, 3, $DioNom, $format_data);  					## Nominal ## 
+									$tested-> write($rowT, 4, $DioHiL, $format_data);  					## HiLimit ##
+									$tested-> write($rowT, 5, $DioLoL, $format_data);	  				## LoLimit ##
 									last;
 									}
 								}
 							}
 						$rowT++;
-						last; #goto Next_Dev;
+						goto Next_Rev1;
 						}
-					elsif (substr($lineTF,0,5) eq "zener")					 ####matching zener##
+					elsif ($list[0] eq "jumper")														## matching type ##
 					{
 						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,5), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
-						$tested-> write($rowT, 2, $param[0], $format_data);  						## Nominal ## 
-						if($param[1] < 40){$tested-> write($rowT, 3, $param[1], $format_data);}  	## HiLimit ##
-						if($param[1] >= 40){$tested-> write($rowT, 3, $param[1], $format_STP);}  	## HiLimit ##
-						if($param[2] < 40){$tested-> write($rowT, 4, $param[2], $format_data);}  	## LoLimit ##
-						if($param[2] >= 40){$tested-> write($rowT, 4, $param[2], $format_STP);}		## LoLimit ##
-						$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  	## Comment ##
-						$rowT++;
-						last; #goto Next_Dev;
-						}
-					elsif (substr($lineTF,0,6) eq "jumper")						####matching jumper########
-					{
-						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,6), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
 						$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-						if($OP == 0){$tested-> write($rowT, 3, $param[0], $format_data);	$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);}  ## Excel ##
-						if($OP == 1){$tested-> write($rowT, 4, $param[0], $format_STP);	$tested-> write($rowT, 5, "OP test", $format_STP);}	## Excel ##
+						if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);}  ## Excel ##
+						if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
 						$rowT++;
-						last; #goto Next_Dev;
+						goto Next_Rev1;
 						}
-					elsif (substr($lineTF,0,4) eq "fuse")					  	####matching fuse########
+					elsif ($list[0] eq "fuse")					  										## matching type ##
 					{
 						$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
-						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".substr($lineTF,0,6), $format_data);  				## TestType ##
-						#print substr($lineTF,9)."\n";
-						@param =  split('\,', substr($lineTF,6));
-						$tested-> write($rowT, 3, $param[0], $format_data);
-						$tested-> write($rowT, 5, substr($testplan{$Mult_file},6), $format_anno);  ## Excel ##
+						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
+						@param =  split('\,', $list[1]);
+						$tested-> write($rowT, 4, $param[0], $format_data);
+						$tested-> write($rowT, 6, substr($testplan{$Mult_file},6), $format_anno);  		## Excel ##
 						$rowT++;
-						last; #goto Next_Dev;
+						goto Next_Rev1;
 						}
-					elsif (eof and $foundTO == 1)					  			####no parameter######
+					elsif (eof and $foundTO == 1)					  									## no parameter ##
 					{
-						$tested-> write($rowT, 0, "[".$versions[$v]."] - ", $format_STP);  ## Excel ##
-						$tested-> write($rowT, 1, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
+						$tested-> write($rowT, 0, "[".$versions[$v]."] - ", $format_STP);  					## Excel ##
+						$tested-> write($rowT, 6, "No Test Parameter Found in TestFile.", $format_anno1);  	## Excel ##
 						$rowT++;
-						last; #goto Next_Dev;
+						goto Next_Rev1;
 						}
 					}}
+				Next_Rev1:
 				}
-		#%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			elsif($testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-res+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-cap+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-jmp+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-dio+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-zen+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-ind+ver"
-			or $testorder{$versions[$v]."+".$keysTO[$i]} eq "untest-fuse+ver"
-    		)
+		#%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			elsif(grep{ $_ eq $testorder{$versions[$v]."+".$Mult_file}} @TOuntestver)
 			{
 				$foundTO = 1;
-				print "			Multiple NullTest	", $Mult_file."-[$versions[$v]]\n";   #, $lineTO,"\n";
-				$tested-> write($rowT, 0, $Mult_file, $format_data);  ## Excel ##
-				$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  					## TestType ##
-				@array = ("-","-","-");
+				print "			Multiple NullTest	", $Mult_file." - [$versions[$v]]\n";
+				$tested-> write($rowT, 0, $Mult_file, $format_data);  										## Excel ##
+				$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  							## TestType ##
+				@array = ("-","-","-","-");
 					$array_ref = \@array;
 					$tested-> write_row($rowT, 2, $array_ref, $format_data);
-				$tested-> write($rowT, 5, "test is skipped in version [$versions[$v]]", $format_anno1);  		## Excel ##
+				$tested-> write($rowT, 6, "test is skipped in version [$versions[$v]]", $format_anno1);  	## Excel ##
 				$rowT++;
 				#last;
 				}
@@ -2344,67 +2305,46 @@ foreach my $device (@bom_list)
 		}
 	if ($rowT - $row_ver > 1){$tested-> merge_range($row_ver, 0, $rowT-1, 0, $Mult_file, $format_item);}
 	}
-	#%%%%%%%%%%%%%%% testplan skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testplan skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif (exists($testplan{$Mult_file})
-	and substr($testplan{$keysTO[$i]},0,7) eq "skipped"
-	and ($testorder{$keysTO[$i]} eq "tested-res"
-	or $testorder{$keysTO[$i]} eq "tested-cap"
-	or $testorder{$keysTO[$i]} eq "tested-jmp"
-	or $testorder{$keysTO[$i]} eq "tested-dio"
-	or $testorder{$keysTO[$i]} eq "tested-zen"
-	or $testorder{$keysTO[$i]} eq "tested-ind"
-	or $testorder{$keysTO[$i]} eq "tested-fuse")
-    )
+	and substr($testplan{$Mult_file},0,7) eq "skipped"
+	and grep{ $_ eq $testorder{$Mult_file}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			Multiple SkipTest	", $Mult_file,"\n";   #, $lineTO,"\n";
-		if ($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
-		$untest-> write($rowU, 0, $Mult_file, $format_data);		## Excel ##
-		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  ## Excel ##
-		$untest-> write($rowU, 2, substr($testplan{$Mult_file},8), $format_anno);  ## Excel ##
+		print "			Multiple SkipTest	", $Mult_file,"\n";
+		if ($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}									#Coverage
+		$untest-> write($rowU, 0, $Mult_file, $format_data);												## Excel ##
+		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  							## Excel ##
+		$untest-> write($rowU, 2, substr($testplan{$Mult_file},8), $format_anno);  							## Excel ##
 		$rowU++;
 		#last; #goto Next_Dev;
 		}
-	#%%%%%%%%%%%%%%% testplan inexistent devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testplan inexistent devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif (not exists($testplan{$Mult_file})
-	and ($testorder{$keysTO[$i]} eq "tested-res"
-	or $testorder{$keysTO[$i]} eq "tested-cap"
-	or $testorder{$keysTO[$i]} eq "tested-jmp"
-	or $testorder{$keysTO[$i]} eq "tested-dio"
-	or $testorder{$keysTO[$i]} eq "tested-zen"
-	or $testorder{$keysTO[$i]} eq "tested-ind"
-	or $testorder{$keysTO[$i]} eq "tested-fuse")
-    )
+	and grep{ $_ eq $testorder{$Mult_file}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			Testplan InExistent	", $Mult_file,"\n";   #, $lineTO,"\n";
-		if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}				#Coverage
-		$untest-> write($rowU, 0, $Mult_file, $format_data);							## Excel ##
+		print "			Testplan InExistent	", $Mult_file,"\n";
+		if ($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}									#Coverage
+		$untest-> write($rowU, 0, $Mult_file, $format_data);												## Excel ##
 		$untest-> write($rowU, 1, "Unidentified in Testplan.", $format_VCC);
-		$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);				## Excel ##
+		$untest-> write($rowU, 2, $testorder{$Mult_file}, $format_anno);									## Excel ##
 		$rowU++;
 		#last; #goto Next_Dev;
 		}
-	#%%%%%%%%%%%%%%% testorder NullTest devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testorder NullTest devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and($testorder{$keysTO[$i]} eq "untest-res"
-	or $testorder{$keysTO[$i]} eq "untest-cap"
-	or $testorder{$keysTO[$i]} eq "untest-jmp"
-	or $testorder{$keysTO[$i]} eq "untest-dio"
-	or $testorder{$keysTO[$i]} eq "untest-zen"
-	or $testorder{$keysTO[$i]} eq "untest-ind"
-	or $testorder{$keysTO[$i]} eq "untest-fuse")
-    )
+	and grep{ $_ eq $testorder{$Mult_file}} @TOuntest)
 	{
 		$foundTO = 1;
-		print "			Multiple NullTest	", $Mult_file,"\n";   #, $lineTO,"\n";
-		$untest-> write($rowU, 0, $Mult_file, $format_data);  ## Excel ##
-		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_anno);  ## Excel ##
+		print "			Multiple NullTest	", $Mult_file,"\n";
+		$untest-> write($rowU, 0, $Mult_file, $format_data);												## Excel ##
+		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_anno);							## Excel ##
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}			#Coverage
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}									#Coverage
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2431,26 +2371,19 @@ foreach my $device (@bom_list)
 		close ALL;
 		#last;
 		}
-	#%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testorder skipped devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and($testorder{$keysTO[$i]} eq "skipped-res"
-	or $testorder{$keysTO[$i]} eq "skipped-cap"
-	or $testorder{$keysTO[$i]} eq "skipped-jmp"
-	or $testorder{$keysTO[$i]} eq "skipped-dio"
-	or $testorder{$keysTO[$i]} eq "skipped-zen"
-	or $testorder{$keysTO[$i]} eq "skipped-ind"
-	or $testorder{$keysTO[$i]} eq "skipped-fuse")
-    )
+	and grep{ $_ eq $testorder{$Mult_file}} @TOskipped)
 	{
 		$foundTO = 1;
-		print "			Multiple Skipped	", $Mult_file,"\n";   #, $lineTO,"\n";
-		$untest-> write($rowU, 0, $Mult_file, $format_data);  ## Excel ##
-		$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  ## Excel ##
+		print "			Multiple Skipped	", $Mult_file,"\n";
+		$untest-> write($rowU, 0, $Mult_file, $format_data);													## Excel ##
+		$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);									## Excel ##
 		$UTline = "";
 		$fileF = 0;
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}			#Coverage
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}										#Coverage
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2477,27 +2410,19 @@ foreach my $device (@bom_list)
 		close ALL;
 		#next; #goto Next_Dev;
 		}
-	#%%%%%%%%%%%%%%% parallel tested devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% parallel tested devices %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and($testorder{$keysTO[$i]} eq "paral-res"
-	or $testorder{$keysTO[$i]} eq "paral-cap"
-	or $testorder{$keysTO[$i]} eq "paral-jmp"
-	or $testorder{$keysTO[$i]} eq "paral-dio"
-	or $testorder{$keysTO[$i]} eq "paral-zen"
-	or $testorder{$keysTO[$i]} eq "paral-ind"
-	or $testorder{$keysTO[$i]} eq "paral-fuse")
-    )
+	and grep{ $_ eq $testorder{$Mult_file}} @TOparal)
 	{
 		$foundTO = 1;
-		print "			Multiple ParalTest	", $Mult_file,"\n";		#, $lineTO,"\n";
+		print "			Multiple ParalTest	", $Mult_file,"\n";
 		
-		if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}			#Coverage
-		$limited-> write($rowL, 0, $Mult_file, $format_data);		## Excel ##
-		#$limited-> write($rowL, 1, $dev[2], $format_anno);			## Excel ##
+		if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}					#Coverage
+		$limited-> write($rowL, 0, $Mult_file, $format_data);								## Excel ##
 		$UTline = "";
 		$fileF = 0;
 	
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 		if ($! eq "No such file or directory"){$limited-> write($rowL, 1, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2524,14 +2449,14 @@ foreach my $device (@bom_list)
 		close ALL;
 		#last;
 		}
-	#%%%%%%%%%%%%%%% testable analog powered test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testable analog powered test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and ($testorder{$keysTO[$i]} eq "tested-pwr" or $testorder{$keysTO[$i]} eq "untest-pwr"
-	or $testorder{$keysTO[$i]} eq "tested-dio" or $testorder{$keysTO[$i]} eq "untest-dio")
+	and ($testorder{$Mult_file} eq "tested-pwr" or $testorder{$Mult_file} eq "untest-pwr"
+	or $testorder{$Mult_file} eq "tested-dio" or $testorder{$Mult_file} eq "untest-dio")
     )
 	{
 		$foundTO = 1;
-		print "			Multiple PwrTest	", $Mult_file,"\n";   #, $lineTO,"\n";
+		print "			Multiple PwrTest	", $Mult_file,"\n";
 			@array = ("-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -2541,21 +2466,21 @@ foreach my $device (@bom_list)
 			if(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+				$coverage-> write($rowC, 3, 'V', $format_data);													#Coverage
+				$power-> write($rowP, 0, $Mult_file, $format_data);												## Excel ##
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);									## Excel ##
 				}
 			elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}				#Coverage
-				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}								#Coverage
+				$power-> write($rowP, 0, $Mult_file, $format_data);												## Excel ##
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
+				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
 			elsif(not exists($testplan{$Mult_file}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}								#Coverage
 				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
@@ -2563,7 +2488,7 @@ foreach my $device (@bom_list)
 				
 		if (exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 		{
-			open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file")  or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+			open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file")  or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -2617,7 +2542,7 @@ foreach my $device (@bom_list)
 			$content = join("",@testname);
 			$content =~ s/(^\s+|\s+$)//g;
 			$power-> write($rowP, 3, $content, $format_anno);
-			if($content eq ""){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
+			if($content eq ""){$power-> write($rowP, 3, "NO valid test found.", $format_anno1);}
 			}
 		$rowP++;
 		}
@@ -2630,18 +2555,18 @@ foreach my $device (@bom_list)
 			$power-> write_row($rowP, 2, $array_ref, $format_data);
 
 			$power-> write($rowP, 0, $Mult_file, $format_data);	
-			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  				## Excel ##
 			$rowP++;
 			}
 		}
-	#%%%%%%%%%%%%%%% testable digital test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testable digital test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and ($testorder{$keysTO[$i]} eq "tested-dig" or $testorder{$keysTO[$i]} eq "untest-dig")
+	and ($testorder{$Mult_file} eq "tested-dig" or $testorder{$Mult_file} eq "untest-dig")
     )
 	{
 		$foundTO = 1;
 		$length_DigPin = 10;
-		print "			Multiple DigiTest	", $Mult_file,"\n";   #, $lineTO,"\n";
+		print "			Multiple DigiTest	", $Mult_file,"\n";
 			@array = ("-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -2651,25 +2576,25 @@ foreach my $device (@bom_list)
 			if(exists($testplan{$Mult_file})and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 2, 'V', $format_data);								#Coverage
+				$coverage-> write($rowC, 2, 'V', $format_data);													#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);									## Excel ##
 				}
 			elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}			#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'K', $format_VCC);}								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
 			elsif(not exists($testplan{$Mult_file}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 2, 'N', $format_data);}								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				}
 
-			###### hyperlink #####################################
-			$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');	## hyperlink
+			###### hyperlink #############################################################
+			$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');		## hyperlink
 			
 			if ($worksheet == 0)
 			{
@@ -2728,7 +2653,7 @@ foreach my $device (@bom_list)
 											}
 										$GND_Pin++;
 										}
-									elsif ($DigPin[1] =~ /(^\+0|^0V|^\+1|^1V|^\+2|^2V|^\+3|^3V|^\+5|^5V|^V_|^VCC|^VDD|^PP|^P0V|^P1V|^P2V|^P3V|^P5V)/)
+									elsif ($DigPin[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 									{
 										if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_VCC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
 										if ($DigPin[0] =~ /^\D/i)
@@ -2821,11 +2746,11 @@ foreach my $device (@bom_list)
   				close Boards;
   				}
 
-			###### hyperlink #####################################
-			$power-> write($rowP, 0, $device, $format_hylk);  			## Excel ##
+			###### hyperlink #############################################################
+			$power-> write($rowP, 0, $device, $format_hylk);
 
 			$family = "";
-  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -2851,17 +2776,17 @@ foreach my $device (@bom_list)
 			$array_ref = \@array;
 			$power-> write_row($rowP, 2, $array_ref, $format_data);
 
-			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  				## Excel ##
 			$rowP++;
 			}
 		}
-	#%%%%%%%%%%%%%%% testable mixed device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testable mixed device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and ($testorder{$keysTO[$i]} eq "tested-mix" or $testorder{$keysTO[$i]} eq "untest-mix")
+	and ($testorder{$Mult_file} eq "tested-mix" or $testorder{$Mult_file} eq "untest-mix")
     )
 	{
 		$foundTO = 1;
-		print "			Multiple MixTest	", $Mult_file,"\n";   #, $lineTO,"\n";
+		print "			Multiple MixTest	", $Mult_file,"\n";
 			@array = ("-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -2871,21 +2796,21 @@ foreach my $device (@bom_list)
 			if(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
-				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+				$coverage-> write($rowC, 3, 'V', $format_data);											#Coverage
+				$power-> write($rowP, 0, $Mult_file, $format_data);										## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);		## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);							## Excel ##
 				}
 			elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}			#Coverage
-				$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}						#Coverage
+				$power-> write($rowP, 0, $Mult_file, $format_data);										## Excel ##
+				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);		## Excel ##
+				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);	## Excel ##
 				}
 			elsif(not exists($testplan{$Mult_file}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			# Coverage
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}						# Coverage
 				$power-> write($rowP, 0, $Mult_file, $format_data);	
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
@@ -2895,23 +2820,23 @@ foreach my $device (@bom_list)
 		
 		elsif($testorder{$Mult_file} eq "untest-mix")
 		{
-			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
+			if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}							#Coverage
 			@array = ("-","-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 2, $array_ref, $format_data);
 			$power-> write($rowP, 0, $Mult_file, $format_data);	
-			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  							## Excel ##
 			$rowP++;
 			}
 		}
-	#%%%%%%%%%%%%%%% testable Bscan device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% testable Bscan device %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elsif(exists($testorder{$Mult_file})
-	and ($testorder{$keysTO[$i]} eq "tested-bscan" or $testorder{$keysTO[$i]} eq "untest-bscan")
+	and ($testorder{$Mult_file} eq "tested-bscan" or $testorder{$Mult_file} eq "untest-bscan")
     )
 	{
 		$foundTO = 1;
 		$length_SNail = 10;
-		print "			Multiple BscTest	", $Mult_file,"\n";   #, $lineTO,"\n";
+		print "			Multiple BscTest	", $Mult_file,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 4, $array_ref, $format_data);
@@ -2921,24 +2846,24 @@ foreach my $device (@bom_list)
 			if(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
 				$cover = 1;
-				$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
+				$coverage-> write($rowC, 4, 'V', $format_data);													#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
-				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+				$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);									## Excel ##
 				}
 			elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}			#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);				## Excel ##
 				$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 				}
 			elsif(not exists($testplan{$Mult_file}))
 			{
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}								#Coverage
 				$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 				$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 				}
 
-			###### hyperlink #####################################
+			###### hyperlink #############################################################
 			$power-> write_url($rowP, 0, 'internal:'.$device.'!A1');    	## hyperlink
 
 			if ($worksheet == 0)
@@ -2997,7 +2922,7 @@ foreach my $device (@bom_list)
 										}
 									$GND_Pin++;
 									}
-								elsif ($BscanNail[1] =~ /(^\+0|^0V|^\+1|^1V|^\+2|^2V|^\+3|^3V|^\+5|^5V|^V_|^VCC|^VDD|^PP|^P0V|^P1V|^P2V|^P3V|^P5V)/)
+								elsif ($BscanNail[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 								{
 									if ($BscanNail[0] =~ /^\d/){$IC-> write(int($BscanNail[0])-1, 0, $BscanNail[1], $format_VCC); if (length($BscanNail[1])> $length_SNail){$length_SNail = length($BscanNail[1]);} $IC-> set_column(0, 0, $length_SNail+2);}
 									if ($BscanNail[0] =~ /^\D/i)
@@ -3069,11 +2994,11 @@ foreach my $device (@bom_list)
   			close Boards;
   			}
 
-			###### hyperlink #####################################
-			$power-> write($rowP, 0, $device, $format_hylk);  				## Excel ##
+			###### hyperlink #############################################################
+			$power-> write($rowP, 0, $device, $format_hylk);  								## Excel ##
 			
 			$family = "";
-  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -3123,18 +3048,17 @@ foreach my $device (@bom_list)
 			@array = ("-","-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 2, $array_ref, $format_data);
-
-			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  		## Excel ##
+			$power-> write($rowP, 1, "Skipped - $Mult_file", $format_anno1);  				## Excel ##
 			$rowP++;
 			}
 		}
-	#%%%%%%%%%%%%%%% Bscan [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% Bscan [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$Mult_file}) and substr($testorder{$versions[$v]."+".$Mult_file},7,9) eq "bscan+ver")
 		{
 			$foundTO = 1;
-			print "			Multiple BscVTest	", $Mult_file." - [$versions[$v]]\n";   #, $lineTO,"\n";
+			print "			Multiple BscVTest	", $Mult_file." - [$versions[$v]]\n";
 			@array = ("-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -3145,19 +3069,19 @@ foreach my $device (@bom_list)
 				if(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 				{
 					$cover = 1;
-					$coverage-> write($rowC, 4, 'V', $format_data);								#Coverage
+					$coverage-> write($rowC, 4, 'V', $format_data);													#Coverage
 					$power-> write($rowP, 1, "tested-bscan - ".$Mult_file." - [".$versions[$v]."]", $format_anno);	## Excel ##
-					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);									## Excel ##
 					}
 				elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 				{
-					if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}			#Coverage
-					$power-> write($rowP, 1, "tested-bscan - ".$Mult_file." - [".$versions[$v]."]", $format_anno);				## Excel ##
-					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 4, 'K', $format_VCC);}								#Coverage
+					$power-> write($rowP, 1, "tested-bscan - ".$Mult_file." - [".$versions[$v]."]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 					}
 				elsif(not exists($testplan{$Mult_file}))
 				{
-					if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}				#Coverage
+					if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}								#Coverage
 					$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 					$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 					}
@@ -3166,21 +3090,20 @@ foreach my $device (@bom_list)
 				
 			elsif($testorder{$versions[$v]."+".$Mult_file} eq "untest-bscan+ver")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}			#Coverage
-				#$power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, "Skipped - $Mult_file -ver: [".$versions[$v]."]", $format_anno1);## Excel ##
-				$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 4, 'N', $format_data);}									#Coverage
+				$power-> write($rowP, 1, "Skipped - $Mult_file -ver: [".$versions[$v]."]", $format_anno1);			## Excel ##
+				$power-> write($rowP, 2, "-", $format_data);														## Excel ##
 				$rowP++;
 				}
 			}
 		}
-	#%%%%%%%%%%%%%%% analog powered [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	#%%%%%%%%%%%%%%% analog powered [sub-version] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	for ($v = 0; $v < $len_ver; $v = $v + 1)
 	{
 		if (exists($testorder{$versions[$v]."+".$Mult_file}) and substr($testorder{$versions[$v]."+".$Mult_file},7,7) eq "pwr+ver")
 		{
 			$foundTO = 1;
-			print "			Multiple PwrVTest	", $Mult_file." - [$versions[$v]]\n";   #, $lineTO,"\n";
+			print "			Multiple PwrVTest	", $Mult_file." - [$versions[$v]]\n";
 			@array = ("-","-","-","-","-","-","-","-","-","-");
 			$array_ref = \@array;
 			$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -3190,25 +3113,25 @@ foreach my $device (@bom_list)
 				if(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 				{
 					$cover = 1;
-					$coverage-> write($rowC, 3, 'V', $format_data);								#Coverage
+					$coverage-> write($rowC, 3, 'V', $format_data);													#Coverage
 					$power-> write($rowP, 1, "tested-pwr - ".$Mult_file." - [".$versions[$v]."]", $format_anno);	## Excel ##
-					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);				## Excel ##
+					$power-> write($rowP, 2, "Tested - ".$Mult_file, $format_anno);									## Excel ##
 					}
 				elsif(exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,7) eq "skipped")
 				{
-					if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}			#Coverage
-					$power-> write($rowP, 1, "tested-pwr - ".$Mult_file." - [".$versions[$v]."]", $format_anno);				## Excel ##
-					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);		## Excel ##
+					if ($cover == 0){$coverage-> write($rowC, 3, 'K', $format_VCC);}								#Coverage
+					$power-> write($rowP, 1, "tested-pwr - ".$Mult_file." - [".$versions[$v]."]", $format_anno);	## Excel ##
+					$power-> write($rowP, 2, "Skipped - ".substr($testplan{$Mult_file},8), $format_anno1);			## Excel ##
 					}
 				elsif(not exists($testplan{$Mult_file}))
 				{
-					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}				#Coverage
+					if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}								#Coverage
 					$power-> write($rowP, 1, $testorder{$Mult_file}." - ".$Mult_file, $format_anno);
 					$power-> write($rowP, 2, "Unidentified in testplan.", $format_VCC);
 					}
 			if (exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
-				open(ALL, "<$versions[$v]/analog/$Mult_file") or open(ALL, "<$versions[$v]/analog/1%$Mult_file") or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
+				open(ALL, "<$versions[$v]/analog/$Mult_file") or open(ALL, "<$versions[$v]/analog/1%$Mult_file") or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
 				if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -3261,7 +3184,7 @@ foreach my $device (@bom_list)
 					$content = join("",@testname);
 					$content =~ s/(^\s+|\s+$)//g;
 					$power-> write($rowP, 3, $content, $format_anno);
-					if($content eq ""){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
+					if($content eq ""){$power-> write($rowP, 3, "NO valid test found.", $format_anno1);}
 					}}
 				$rowP++;
 				}
@@ -3269,39 +3192,85 @@ foreach my $device (@bom_list)
 			#mult-ver TO skipped
 			elsif($testorder{$versions[$v]."+".$Mult_file} eq "untest-pwr+ver")
 			{
-				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}			#Coverage
-				# $power-> write($rowP, 0, $Mult_file, $format_data);							## Excel ##
-				$power-> write($rowP, 1, "Skipped - $Mult_file -ver: [".$versions[$v]."]", $format_anno1);				## Excel ##
-				$power-> write($rowP, 2, "-", $format_data);								## Excel ##
+				if ($cover == 0){$coverage-> write($rowC, 3, 'N', $format_data);}								#Coverage
+				$power-> write($rowP, 1, "Skipped - $Mult_file -ver: [".$versions[$v]."]", $format_anno1);		## Excel ##
+				$power-> write($rowP, 2, "-", $format_data);													## Excel ##
 				$rowP++;
 				}
 			}
 		}
-	########################################################################################################################################
+	######################################################################################
 			}
 		}
 	}
-	################ reservation ###########################################################################################################
+	################ reservation #########################################################
 
 	if((not exists ($testorder{$device}) or $testorder{$device} eq "") and $foundTO == 0)
 	{
 		#print $foundTO,"--5--","\n";
-		print "			NO Valid Test Found	$device\n"; 
-		$coverage-> write($rowC, 5, 'N', $format_data);		#Coverage
-		$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
-		$untest-> write($rowU, 1, "NO valid test items found in TestOrder.", $format_anno);  ## Excel ##
-		$untest-> write($rowU, 2, "Check TJ/SP/other testing.", $format_anno);  ## Excel ##
+		print "\t\t\t", color('magenta'), "NO Valid Test Found	$device", color('reset'), "\n"; 
+		$coverage-> write($rowC, 5, 'N', $format_data);											#Coverage
+		$untest-> write($rowU, 0, $device, $format_data);  										## Excel ##
+		$untest-> write($rowU, 1, "NO valid test items found in TestOrder.", $format_anno);		## Excel ##
+		$untest-> write($rowU, 2, "Check TJ/SP/other testing.", $format_anno);  				## Excel ##
 		$rowU++;
 		goto Next_Dev;
 		}
-   ########################################################################################################################################
-#print $testorder{$device},"\n";
-Next_Dev:
-#print $device.$rowP."	".$rowP_ori."\n";
-if ($rowP - $rowP_ori > 1){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
-}
+    ######################################################################################
+	#print $testorder{$device},"\n";
+	Next_Dev:
+	#print $device.$rowP."	".$rowP_ori."\n";
+	if ($rowP - $rowP_ori > 1){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
+	}
 
-############################### shorts threshold statistic ################################################################################
+############################### read Board value #########################################
+sub read_value{
+	my $dev = shift;
+	#print $dev,"\n";
+	
+	open (Boards, "< board");
+	while(my $array = <Boards>)								
+	{
+		chomp ($array);
+		last if ($array =~ "CONNECTIONS");
+		$array =~ s/(^\s+|\s+$)//g;
+		my @list = split('\ ', $array);
+		next if (scalar @list < 5);
+		if($list[0] eq $dev)
+		{
+			#print $list[0],"\n";
+			#print $list[1],"\n";
+			return $list[1];
+			last;
+			}
+		}
+	close Boards;
+	}
+
+sub read_multi_value{
+	my $dev = shift;
+	#print $dev,"\n";
+	
+	open (Boards, "< board");
+	while(my $array = <Boards>)								
+	{
+		chomp ($array);
+		last if ($array =~ "CONNECTIONS");
+		$array =~ s/(^\s+|\s+$)//g;
+		my @list = split('\ ', $array);
+		next if (scalar @list < 5);
+		if($list[0] eq $dev)
+		{
+			my @list = split('\"', $array);
+			my @multi_list = split('\ ', $list[3]);
+			return $multi_list[1];
+			last;
+			}
+		}
+	close Boards;
+	}
+
+############################### shorts threshold statistic ###############################
 
 print  "\n  >>> Analyzing shorts threshold ...\n";
 
@@ -3380,7 +3349,7 @@ foreach my $i (0..@skip_nodes-1)
 
 $short_thres-> write(0, 3, "tested nodes: ".scalar@test_nodes, $format_anno);
 
-###########################################################################################################################################
+##########################################################################################
 
 
 $bom_coverage_report->close();
