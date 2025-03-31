@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.92>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.93>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -318,19 +318,19 @@ while(my $array = <Import>)
 				my $suffix = "";
 				my $begin = "";
 				my $final = "";
-				my $style = "";  # C for character, D for digit	
+				my $pattern = "";  # C for character, D for digit	
 				# print "	".$fields[$num]."\n";
 				my @Comps = split(/-/, $fields[$num]);
 				my @Comp = split(/([a-z]+)/i, $Comps[0]);
 	
 				if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 3)
-					{$style = "CD"; $begin = $Comp[scalar@Comp - 1];}  # begin
+					{$pattern = "CD"; $begin = $Comp[scalar@Comp - 1];}  # begin
 	
 				if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 4)
-					{$style = "CDC"; $begin = $Comp[scalar@Comp - 2]; $suffix = $Comp[scalar@Comp - 1];}  # begin
+					{$pattern = "CDC"; $begin = $Comp[scalar@Comp - 2]; $suffix = $Comp[scalar@Comp - 1];}  # begin
 	
 				if ($Comp[1] =~ /([a-z]+)/i and scalar@Comp == 5)
-					{$style = "CDCD"; $begin = $Comp[scalar@Comp - 1];}  # begin
+					{$pattern = "CDCD"; $begin = $Comp[scalar@Comp - 1];}  # begin
 	
 				@Comp = split(/([a-z]+)/i, $Comps[1]);
 				$final = $Comp[scalar@Comp - 1];  # final
@@ -340,7 +340,7 @@ while(my $array = <Import>)
 				
 				# @fields(,) > @Comps(-) > @Comp(c)
 				#-------------------------------------------------------------------------
-				if ($style eq "CD")
+				if ($pattern eq "CD")
 				{
 					#print "CD\n";
 					for (my $num = $begin; $num < $final+1; $num++)
@@ -361,7 +361,7 @@ while(my $array = <Import>)
 					}
 	
 				#-------------------------------------------------------------------------
-				if ($style eq "CDC")
+				if ($pattern eq "CDC")
 				{
 					#print "CDC\n";
 					for (my $num = $begin; $num < $final+1; $num++)
@@ -382,7 +382,7 @@ while(my $array = <Import>)
 					}
 	
 				#-------------------------------------------------------------------------
-				if ($style eq "CDCD")
+				if ($pattern eq "CDCD")
 				{
 					#print "CDCD\n";
 					for (my $num = $begin; $num < $final+1; $num++)
@@ -439,7 +439,8 @@ $summary-> write("A12", "valid BOM: ".$length);
 
 ##################### loading BOMvalue to hash ###########################################
 my %bom_value = ();
-open (Board, "< board");
+open (Board, "< board") or warn "\t!!! Failed to open 'board' file: $!.\n";
+	if ($! eq "No such file or directory"){print "\n\t>>> program exiting ...\n"; <STDIN>; exit;}
 while($line = <Board>)
 {
 	chomp ($line);
@@ -550,7 +551,7 @@ if(-e $BDG_File)
 		}
 	close BDGFile;
 	}
-
+else{warn "\t!!! Failed to open './bdg_data/dig_inc_ver_fau.dat': $!.\n";}
 my @keysBDG = keys %bdg_list;
 my $sizeBDG = @keysBDG;
 print "	BDG: ", $sizeBDG,"\n";
@@ -558,7 +559,7 @@ $summary-> write("A13", "BDG: ".$sizeBDG);
 
 ##################### loading pins to hash ###############################################
 my %hash_pin = ();
-open (Pin, "< pins") || open (Pin, "< 1%pins"); 
+open (Pin, "< pins") or open (Pin, "< 1%pins") or warn "\t!!! Failed to open 'pins' file: $!.\n";
 while($nodes = <Pin>)
 {
 	chomp ($nodes);
@@ -585,7 +586,8 @@ $summary-> write("A14", "Pins: ".$size);
 ##################### loading testorder to hash ##########################################
 my %testorder = ();
 my @versions = ();
-open (TO, "< testorder"); 
+open (TO, "< testorder") or warn "\t!!! Failed to open 'testorder' file: $!.\n";
+	if ($! eq "No such file or directory"){print "\n\t>>> program exiting ...\n"; <STDIN>; exit;}
 while($dev = <TO>)
 {
 	chomp($dev);
@@ -695,7 +697,8 @@ $summary-> write("A16", "$len_ver versions: @versions");
 ##################### loading testplan to hash ###########################################
 our %testplan = ();
 my $learn = 0;
-open (TP, "< testplan"); 
+open (TP, "< testplan") or warn "\t!!! Failed to open 'testplan' file: $!.\n";
+	if ($! eq "No such file or directory"){print "\n\t>>> program exiting ...\n"; <STDIN>; exit;}
 while($dev = <TP>)
 {
 	my @dev = ();
@@ -798,7 +801,7 @@ foreach my $device (@bom_list)
 		$value = '-';
 		if(exists($bom_value{uc($device)})){$value = $bom_value{uc($device)};} #print "$device value is: $bom_value{uc($device)} \n"; }
 		
-		open(SourceFile, "<analog/$device") or open(SourceFile, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+		open(SourceFile, "<analog/$device") or open(SourceFile, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 		if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -976,7 +979,7 @@ foreach my $device (@bom_list)
 				$UNCover = 1;
 				$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 	
-				open(SourceFile, "<$versions[$v]/analog/$device") or open(SourceFile, "<$versions[$v]/analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+				open(SourceFile, "<$versions[$v]/analog/$device") or open(SourceFile, "<$versions[$v]/analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 				if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -1127,7 +1130,7 @@ foreach my $device (@bom_list)
 		$fileF = 0;
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}					#Coverage
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1164,7 +1167,7 @@ foreach my $device (@bom_list)
 		$fileF = 0;
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}					#Coverage
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1202,7 +1205,7 @@ foreach my $device (@bom_list)
 		$UTline = "";
 		$fileF = 0;
 		
-		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 		if ($! eq "No such file or directory"){$limited-> write($rowL, 1, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -1265,7 +1268,7 @@ foreach my $device (@bom_list)
 			
 		if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 		{
-			open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+			open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t!!! Failed to open '$device' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -1369,7 +1372,7 @@ foreach my $device (@bom_list)
 				
 			if (exists($testplan{$device}) and substr($testplan{$device},0,6) eq "tested")
 			{
-				open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+				open(ALL, "<analog/$device") or open(ALL, "<analog/1%$device") or  warn "\t!!! Failed to open '$device' file: $!.\n";
 				if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -1628,7 +1631,7 @@ foreach my $device (@bom_list)
 			$power-> write($rowP, 0, $device, $format_hylk);
 
 			$family = "";
-  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -1916,7 +1919,7 @@ foreach my $device (@bom_list)
 			$power-> write($rowP, 0, $device, $format_hylk);  				## Excel ##
 			
 			$family = "";
-  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t",color('red'),"!!! Failed to open '$device' file:",color('reset')," $!.\n";
+  			open(SourceFile, "<digital/$device") or open(SourceFile, "<digital/1%$device") or warn "\t!!! Failed to open '$device' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -2009,7 +2012,7 @@ foreach my $device (@bom_list)
 		$value = '-';
 		if(exists($bom_value{uc($device)})){$value = $bom_value{uc($device)};} #print "$device value is: $bom_value{uc($device)} \n"; }
 		
-		open(SourceFile, "<analog/$Mult_file") or open(SourceFile, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+		open(SourceFile, "<analog/$Mult_file") or open(SourceFile, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 		if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2186,7 +2189,7 @@ foreach my $device (@bom_list)
 				$UNCover = 1;	
 				$coverage-> write($rowC, 1, 'V', $format_data);			#Coverage
 	
-				open(SourceFile, "<$versions[$v]/analog/$Mult_file") or open(SourceFile, "<$versions[$v]/analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+				open(SourceFile, "<$versions[$v]/analog/$Mult_file") or open(SourceFile, "<$versions[$v]/analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 				if ($! eq "No such file or directory"){$tested-> write($rowT, 6, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -2344,7 +2347,7 @@ foreach my $device (@bom_list)
 		$fileF = 0;
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'N', $format_data);}									#Coverage
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2383,7 +2386,7 @@ foreach my $device (@bom_list)
 		$fileF = 0;
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}										#Coverage
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 		if ($! eq "No such file or directory"){$untest-> write($rowU, 2, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2422,7 +2425,7 @@ foreach my $device (@bom_list)
 		$UTline = "";
 		$fileF = 0;
 	
-		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+		open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 		if ($! eq "No such file or directory"){$limited-> write($rowL, 1, "TestFile not found.", $format_anno1);}
 		else
 		{
@@ -2488,7 +2491,7 @@ foreach my $device (@bom_list)
 				
 		if (exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 		{
-			open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file")  or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+			open(ALL, "<analog/$Mult_file") or open(ALL, "<analog/1%$Mult_file")  or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -2750,7 +2753,7 @@ foreach my $device (@bom_list)
 			$power-> write($rowP, 0, $device, $format_hylk);
 
 			$family = "";
-  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -2998,7 +3001,7 @@ foreach my $device (@bom_list)
 			$power-> write($rowP, 0, $device, $format_hylk);  								## Excel ##
 			
 			$family = "";
-  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+  			open(SourceFile, "<digital/$Mult_file") or open(SourceFile, "<digital/1%$Mult_file") or warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 			if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 			else
 			{
@@ -3131,7 +3134,7 @@ foreach my $device (@bom_list)
 					}
 			if (exists($testplan{$Mult_file}) and substr($testplan{$Mult_file},0,6) eq "tested")
 			{
-				open(ALL, "<$versions[$v]/analog/$Mult_file") or open(ALL, "<$versions[$v]/analog/1%$Mult_file") or  warn "\t",color('red'),"!!! Failed to open '$Mult_file' file:",color('reset')," $!.\n";
+				open(ALL, "<$versions[$v]/analog/$Mult_file") or open(ALL, "<$versions[$v]/analog/1%$Mult_file") or  warn "\t!!! Failed to open '$Mult_file' file: $!.\n";
 				if ($! eq "No such file or directory"){$power-> write($rowP, 3, "TestFile not found.", $format_anno1);}
 				else
 				{
@@ -3208,7 +3211,7 @@ foreach my $device (@bom_list)
 	if((not exists ($testorder{$device}) or $testorder{$device} eq "") and $foundTO == 0)
 	{
 		#print $foundTO,"--5--","\n";
-		print "\t\t\t", color('magenta'), "NO Valid Test Found	$device", color('reset'), "\n"; 
+		print "\t\t\tNO Valid Test Found	$device\n"; 
 		$coverage-> write($rowC, 5, 'N', $format_data);											#Coverage
 		$untest-> write($rowU, 0, $device, $format_data);  										## Excel ##
 		$untest-> write($rowU, 1, "NO valid test items found in TestOrder.", $format_anno);		## Excel ##
@@ -3280,7 +3283,7 @@ my $node = 1;
 @test_nodes = ();
 my @skip_nodes = ();
 
-open (Thres, "< shorts") || open (Thres, "< 1%shorts"); 
+open (Thres, "< shorts") or open (Thres, "< 1%shorts") or warn "\t!!! Failed to open 'shorts' file: $!.\n";
 	while($nodes = <Thres>)
 	{
 		chomp $nodes;
