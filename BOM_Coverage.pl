@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.93>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.97>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -19,9 +19,9 @@ use Term::ANSIColor;
 
 our ($Ccode, $bom, $board, $length, $len, $OP, $IC, $pos, $DigPos, $length_DigPin );
 our ($dev, $v, $i, $value, $versions, $family, $length_SNail, $NailPos );
-our (@array, @testname, @param, @DigPin, @BscanNail, @test_item, @test_nodes );
+our (@array, @testname, @param, @DigPin, @BscanNail, @test_item, %test_nodes );
 our ($array_ref, $bdg, $nodes, $fileF, $line, $lineTF, $lineDig, $UTline, $content );
-our ($device1, $BscanPin, $node_nam, $Mult_file );
+our ($device1, $BscanPin, $node_nam, $Mult_file, $node );
 our ($DioNom, $DioHiL, $DioLoL);
 
 
@@ -85,8 +85,8 @@ $limited-> set_column(1,1,30);			#设置列宽
 $power-> set_column(0,1,15);			#设置列宽
 $power-> set_column(1,3,30);			#设置列宽
 $power-> set_column(4,12,15);			#设置列宽
-$short_thres-> set_column(0,0,50);		#设置列宽
-$short_thres-> set_column(1,3,20);		#设置列宽
+$short_thres-> set_column(0,1,50);		#设置列宽
+$short_thres-> set_column(2,3,20);		#设置列宽
 
 $summary-> activate();					#设置初始可见
 $bom_coverage_report->set_size(1680, 1180);	#设置初始窗口尺寸
@@ -136,9 +136,10 @@ $power-> write("K1", '<Untest Pin>', $format_data);
 $power-> write("L1", '<Toggle Coverage>', $format_togg);
 $power-> write("M1", '<Pin Coverage>', $format_pin);
 
-$short_thres-> write("A1", 'Nodes', $format_head);
-$short_thres-> write("B1", 'Threshold', $format_head);
-$short_thres-> write("C1", 'Delay', $format_head);
+#$short_thres-> write("A1", 'Fixture TP', $format_head);
+#$short_thres-> write("B1", 'Nodes', $format_head);
+$short_thres-> write("C1", 'Threshold', $format_head);
+$short_thres-> write("D1", 'Delay', $format_head);
 
 $summary-> write("A1", 'Test Items', $format_head);
 $summary-> write("B1", 'Quantity', $format_head);
@@ -156,7 +157,7 @@ $summary-> write("B3", '=COUNTA(Untest!A2:A9999)', $format_data);
 $summary-> write("B4", '=COUNTA(LimitTest!A2:A9999)', $format_data);
 $summary-> write("B5", '=COUNTIF(PowerTest!C2:C99999,"Tested - *")', $format_data);
 $summary-> write("B6", '=SUM(COUNTIF(PowerTest!C2:C99999,{"Unidentified *","skipped -*"}))', $format_data);
-$summary-> write("B7", '=COUNTA(Shorts_Setting!A2:A9999)-COUNTIF(Shorts_Setting!A2:A9999,"!nodes *")', $format_data);
+$summary-> write("B7", '=COUNTA(Shorts_Setting!B2:B9999)-COUNTIF(Shorts_Setting!C2:C9999,"!*")', $format_data);
 
 $summary-> write_formula("C2", "=(B2/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
 $summary-> write_formula("C3", "=(B3/(B2+B3+B4+B5+B6))", $format_PCT);  #输出Percentage
@@ -283,7 +284,7 @@ print "  Gathering all BOM devices...";
 our @bom_list = ();
 
 our $number = 0;
-open (Export, "> component_list.txt"); 
+open (Export, "> Component_List.txt"); 
 open (Import, "< $bom"); 
 while(my $array = <Import>)
 {
@@ -470,13 +471,52 @@ while($line = <Board>)
 			$line =~ s/(^\s+|\s+$)//g;
 			last if ($line eq '');
 			my @line = ();
-			@line = split('\ ', $line, 4);
-			next if (scalar @line < 4);
-			if(uc(substr($line[3],1,3)) =~ /^(RES|CAP)$/)
+			@line = split('\ ', $line, 3);
+			if($line =~ " PN"){@line = split('\ ', $line, 4);}
+			next unless (scalar @line > 2);
+			next if (scalar @line == 3 and uc(substr($line[2],1,3)) ne "RES");
+			next if (scalar @line == 4 and uc(substr($line[3],1,3)) ne "RES");
+			if(scalar @line == 3 and uc(substr($line[2],1,3)) eq "RES")
+			{
+				my @line1 = split( substr($line[2],4,1), $line[2]);
+				#print $line[0],"-",$line[2],"\n";
+				if (substr($line1[1],-1,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = $line1[1]; next;}
+				elsif (substr($line1[2],-1,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = $line1[2]; next;}
+				elsif (substr($line1[3],-1,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = $line1[3]; next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "K" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "K" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "K" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "M" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "M" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "M" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+				
+				elsif (uc(substr($line1[1],-3,3)) eq "OHM"){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-3); next;}
+				elsif (uc(substr($line1[2],-3,3)) eq "OHM"){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-3); next;}
+				elsif (uc(substr($line1[3],-3,3)) eq "OHM"){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-3); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
+				}
+			if(scalar @line == 4 and uc(substr($line[3],1,3)) eq "RES")
 			{
 				my @line1 = split( substr($line[3],4,1), $line[3]);
-				#print $line[0],"-",$line1[1],"\n";	#3757
-				$bom_value{$line[0]} = $line1[1];
+				#print $line[0],"-",$line[3],"\n";
+				if (substr($line1[1],-1,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = $line1[1]; next;}
+				elsif (substr($line1[2],-1,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = $line1[2]; next;}
+				elsif (substr($line1[3],-1,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = $line1[3]; next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "K" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "K" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "K" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "M" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "M" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "M" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+				
+				elsif (uc(substr($line1[1],-3,3)) eq "OHM"){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-3); next;}
+				elsif (uc(substr($line1[2],-3,3)) eq "OHM"){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-3); next;}
+				elsif (uc(substr($line1[3],-3,3)) eq "OHM"){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-3); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
 				}
 			}
 		}
@@ -490,12 +530,77 @@ while($line = <Board>)
 			last if ($line eq '');
 			my @line = ();
 			@line = split('\ ', $line, 3);
+			if($line =~ " NP"){@line = split('\ ', $line, 4);}
 			next if (scalar @line < 3);
-			if(uc(substr($line[2],1,3)) =~ /^(RES|CAP)$/)
+			next if (scalar @line == 3 and uc(substr($line[2],1,3)) !~ /(CAP|RES)/);
+			next if (scalar @line == 4 and uc(substr($line[3],1,3)) !~ /(CAP|RES)/);
+			if(scalar @line == 3 and uc(substr($line[2],1,3)) eq "CAP")
 			{
 				my @line1 = split( substr($line[2],4,1), $line[2]);
-				#print $line[0],"-",$line1[1],"\n";
-				$bom_value{$line[0]} = $line1[1];
+				#print $line[0],"-",$line[2],"\n";
+				if (uc(substr($line1[1],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[1]); next;}
+				elsif (uc(substr($line1[2],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[2]); next;}
+				elsif (uc(substr($line1[3],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[3]); next;}
+				
+				elsif (uc(substr($line1[1],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[1],-3,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[1],0,-1)); next;}
+				elsif (uc(substr($line1[2],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[2],-3,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[2],0,-1)); next;}
+				elsif (uc(substr($line1[3],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[3],-3,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[3],0,-1)); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
+				}
+			if(scalar @line == 3 and uc(substr($line[2],1,3)) eq "RES")
+			{
+				my @line1 = split( substr($line[2],4,1), $line[2]);
+				#print $line[0],"-",$line[2],"\n";
+				if (substr($line1[1],-1,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = $line1[1]; next;}
+				elsif (substr($line1[2],-1,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = $line1[2]; next;}
+				elsif (substr($line1[3],-1,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = $line1[3]; next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "K" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "K" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "K" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "M" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "M" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "M" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+				
+				elsif (uc(substr($line1[1],-3,3)) eq "OHM"){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-3); next;}
+				elsif (uc(substr($line1[2],-3,3)) eq "OHM"){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-3); next;}
+				elsif (uc(substr($line1[3],-3,3)) eq "OHM"){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-3); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
+				}
+			if(scalar @line == 4 and uc(substr($line[3],1,3)) eq "CAP")
+			{
+				my @line1 = split( substr($line[3],4,1), $line[3]);
+				#print $line[0],"-",$line[2],"\n";
+				if (uc(substr($line1[1],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[1]); next;}
+				elsif (uc(substr($line1[2],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[2]); next;}
+				elsif (uc(substr($line1[3],-1,1)) =~ /^(M|U|N|P)$/ and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = lc($line1[3]); next;}
+				
+				elsif (uc(substr($line1[1],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[1],-3,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[1],0,-1)); next;}
+				elsif (uc(substr($line1[2],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[2],-3,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[2],0,-1)); next;}
+				elsif (uc(substr($line1[3],-2,2)) =~ /^(MF|UF|NF|PF)$/ and substr($line1[3],-3,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = lc(substr($line1[3],0,-1)); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
+				}
+			if(scalar @line == 4 and uc(substr($line[3],1,3)) eq "RES")
+			{
+				my @line1 = split( substr($line[3],4,1), $line[3]);
+				#print $line[0],"-",$line[3],"\n";
+				if (substr($line1[1],-1,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = $line1[1]; next;}
+				elsif (substr($line1[2],-1,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = $line1[2]; next;}
+				elsif (substr($line1[3],-1,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = $line1[3]; next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "K" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "K" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "K" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+
+				elsif (uc(substr($line1[1],-1,1)) eq "M" and substr($line1[1],-2,1) =~ '\d'){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-1); next;}
+				elsif (uc(substr($line1[2],-1,1)) eq "M" and substr($line1[2],-2,1) =~ '\d'){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-1); next;}
+				elsif (uc(substr($line1[3],-1,1)) eq "M" and substr($line1[3],-2,1) =~ '\d'){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-1); next;}
+				
+				elsif (uc(substr($line1[1],-3,3)) eq "OHM"){$line1[1] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[1],0,-3); next;}
+				elsif (uc(substr($line1[2],-3,3)) eq "OHM"){$line1[2] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[2],0,-3); next;}
+				elsif (uc(substr($line1[3],-3,3)) eq "OHM"){$line1[3] =~ s/\s+//g; $bom_value{$line[0]} = substr($line1[3],0,-3); next;}
+				else {print "\t\t!!! failed to read value for: $line[0]\n";}
 				}
 			}
 		}
@@ -514,13 +619,24 @@ while($line = <Board>)
 			$bom_value{$line[0]} = $line[1];
 			}
 		}
-
 	}
 close Board;
 
 my @keysBOM = keys %bom_value;
 my $sizeBOM = @keysBOM;
 print "\tBOM value: ", $sizeBOM,"\n";
+$summary-> write("A13", "BOM value: ".$sizeBOM);
+
+# print "CF036 value is: $bom_value{'CF036'} \n";
+
+# while (my ($key, $value) = each %bom_value) {
+#     print "$key => $value\n";
+# }
+
+# foreach my $key (sort keys %bom_value) {
+#     print "$key => $bom_value{$key}\n";
+# }
+
 
 ##################### loading BDG to hash ################################################
 my %bdg_list = ();
@@ -555,7 +671,8 @@ else{warn "\t!!! Failed to open './bdg_data/dig_inc_ver_fau.dat': $!.\n";}
 my @keysBDG = keys %bdg_list;
 my $sizeBDG = @keysBDG;
 print "	BDG: ", $sizeBDG,"\n";
-$summary-> write("A13", "BDG: ".$sizeBDG);
+$summary-> write("A14", "BDG: ".$sizeBDG);
+
 
 ##################### loading pins to hash ###############################################
 my %hash_pin = ();
@@ -581,7 +698,8 @@ close Pin;
 my @keys = keys %hash_pin;
 my $size = @keys;
 print "	Pins: ".$size."\n";
-$summary-> write("A14", "Pins: ".$size);
+$summary-> write("A15", "Pins: ".$size);
+
 
 ##################### loading testorder to hash ##########################################
 my %testorder = ();
@@ -687,12 +805,13 @@ close TO;
 my @keysTO = keys %testorder;
 my $sizeTO = @keysTO;
 print "	testorder: ".$sizeTO."\n";
-$summary-> write("A15", "testorder: ".$sizeTO);
+$summary-> write("A16", "testorder: ".$sizeTO);
 
 @versions = uniq @versions;
 $len_ver = scalar @versions;
 print "	$len_ver versions: @versions\n";
-$summary-> write("A16", "$len_ver versions: @versions");
+$summary-> write("A17", "$len_ver versions: @versions");
+
 
 ##################### loading testplan to hash ###########################################
 our %testplan = ();
@@ -745,9 +864,217 @@ close TP;
 my @keysTP = keys %testplan;
 my $sizeTP = @keysTP;
 print "	testplan: ".$sizeTP."\n";
-$summary-> write("A17", "testplan: ".$sizeTP);
-my $row_ver = 0;
+$summary-> write("A18", "testplan: ".$sizeTP);
 
+
+############################### shorts threshold statistic ###############################
+print  "\n	>>> Analyzing shorts threshold ...\n";
+
+my $delay = "-";
+my $thres = "-";
+$node = 1;
+%test_nodes = ();
+my @skip_nodes = ();
+our @shorts = ();
+
+open (Thres, "< shorts") or open (Thres, "< 1%shorts") or warn "\t!!! Failed to open 'shorts' file: $!.\n";
+if ($! ne "No such file or directory")
+{
+	while($nodes = <Thres>)
+	{
+		chomp $nodes;
+		$nodes =~ s/^ +//;	   #clear head of line spacing
+		$nodes =~ s/( +)/ /g;
+		if (substr($nodes,0,9) =~ "threshold")
+		{
+			$thres = substr($nodes, index($nodes,"threshold")+10);
+			if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
+			$thres =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+			}
+		if (substr($nodes,0,14) =~ "settling delay") 
+		{
+			#print $nodes,"\n";
+			if($nodes =~ "\!"){$delay = substr($nodes, 15, index($nodes,"\!")-15);}
+			else{$delay = substr($nodes, 15);}
+			#print $delay,"\n";
+			#if ($nodes =~ "\!"){$delay = substr($nodes, 10, index($nodes,"\!")-10);}
+			$delay =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+			}
+		if ($nodes =~ "nodes")
+		{
+			my @node = split('\"', $nodes);
+			if(substr($nodes,0,1) eq "!")
+			{
+				my $node_name = $node[1];
+				$node_name =~ s/(^\s+|\s+$)//g;                     #clear all spacing
+				#$short_thres-> write($node, 0, $node_name, $format_data);  ## Nodes ##
+				#$short_thres-> write($node, 1, substr($nodes, rindex($nodes,"!")), $format_data);  ## Thres ##
+				#$short_thres-> write($node, 2, "-", $format_data);  ## Delay ##
+				push (@skip_nodes, $node_name."/".substr($nodes, rindex($nodes,"!"))."/"."-")
+				}
+			elsif(substr($nodes,0,5) eq "nodes")
+			{
+				#$short_thres-> write($node, 0, $nodes, $format_data);  ## Nodes ##
+				#$short_thres-> write($node, 1, $thres, $format_data);  ## Thres ##
+				#$short_thres-> write($node, 2, $delay, $format_data);  ## Delay ##
+				#push (%test_nodes, $nodes."/".$thres."/".$delay)
+				$test_nodes{$node[1]} = $thres."/".$delay;
+				}
+			#$node++;
+			#print $nodes."/".$thres."/".$delay."\n";
+			}
+		if (substr($nodes,0,5) eq "short") 
+		{
+			$nodes =~ s/( +)//g;
+			#print $nodes,"\n";
+			my @nodes = split('\"', uc($nodes));
+			push (@shorts, $nodes[1]."/".$nodes[3]);
+			}
+		}
+	}
+close Thres;
+
+
+foreach my $key (sort keys %test_nodes)
+{
+    #print "$key => $test_nodes{$key}\n";
+    @test_item = split("\/", $test_nodes{$key});
+    $short_thres-> write($node, 1, $key, $format_data);  ## Nodes ##
+    $short_thres-> write($node, 2, $test_item[0], $format_data);  ## Thres ##
+    $short_thres-> write($node, 3, $test_item[1], $format_data);  ## Delay ##
+	$node++;
+	}
+
+foreach my $i (0..@skip_nodes-1)
+{
+	#print $skip_nodes[$i];
+	@test_item = split("\/", $skip_nodes[$i]);
+	$short_thres-> write($node, 0, "-", $format_data);
+	$short_thres-> write($node, 1, $test_item[0], $format_anno);  ## Nodes ##
+	$short_thres-> write($node, 2, $test_item[1], $format_anno);  ## Thres ##
+	$short_thres-> write($node, 3, $test_item[2], $format_data);  ## Delay ##
+	$node++;
+	}
+
+my @keysNode = keys %test_nodes;
+my $sizeNode = @keysNode;
+print "\ttested shorts: ". @shorts ."\n";
+print "\ttested nodes: $sizeNode\n";
+$short_thres-> write("B1", 'Tested Nodes: '.$sizeNode, $format_head);
+
+
+############################### reading fixture.o ########################################
+my $Nnum = 0;	#node numbers
+my $Wnum = 0;   #Wire numbers
+$node = 1;
+my @pins =(); my $short_pair = ''; my $BRC = '';
+my $BRCbuffer = ''; my @node = ''; my $panel = "";
+
+open (Fixture, "< ./fixture/fixture.o") or warn "\t!!! Failed to open 'fixture.o' file: $!.\n";
+open (Report, ">Fixture.txt");
+while(my $LIST = <Fixture>)
+{
+	$LIST =~ s/(^\s+|\s+$)//g;		#clear all non-character symbol
+	next if(!$LIST);				#goto next if it's empty
+	my @nodes = split('\s+', $LIST);
+	last if ($LIST eq "PROTECTED UNIT");
+	if ($LIST =~ "END PANEL"){$panel = "True";}
+
+	if($nodes[0] eq "NODE")
+	{
+		$LIST = <Fixture>;
+		$LIST =~ s/(^\s+|\s+$)//g;
+		next if(!$LIST);			#goto next if it's empty
+		if($LIST ne "PROBES")
+		{
+			$Nnum++;
+			if($nodes[1] =~ '\%'){$nodes[1] = substr($nodes[1], 3, -1)}
+			if($nodes[1] =~ '\"'){$nodes[1] = substr($nodes[1], 1, -1)}
+			#next if($nodes[1] =~ /(^NC_|_NC$|NONE)/);	#eliminate NC nets
+			#print "Probe\#:$Nnum	$nodes[1]\n";
+			print Report "	#$Nnum\n";
+			print Report "$nodes[1]\n";
+			while($LIST = <Fixture>)
+			{
+				$LIST =~ s/(^\s+|\s+$)//g;
+				last if(!$LIST);		#exit loop if it's none-character symbol				
+				if($LIST eq "WIRES")
+				{
+					my @pair = ();
+					#print @pair."\n";
+					my $BRCnum = 0;	#BRC numbers
+					while($LIST = <Fixture>)
+					{
+						$LIST =~ s/(^\s+|\s+$)//g;	   #clear all non-character symbol
+						goto NEXT_NODE if(!$LIST);		#exit loop if it's none-character symbol
+						@node = split('\s+', $LIST);
+						if($node[0] !~ /(\D+)/) {($BRC) = $node[0] =~ /(\d+)/;
+							next if(substr($BRC,-2) =~ /(19|20|39|40|59|60)/);	#eliminate fixed GROUND
+							next if(substr($BRC,0,3) =~ /(201|213|111|123|106|118|206|218)/);	#eliminate ASRU/Control card				
+							next if($BRCbuffer eq $BRC);
+							$Wnum++;
+							#print "   Wire\#:$Wnum	",$BRC,"\n";
+							print Report $BRC."\n";
+							$BRCbuffer = $BRC;
+							unshift(@pair, $BRC);
+							if($BRCnum > 0)
+							{
+								#print $BRC,"\n";
+								if($BRC < $pair[$BRCnum]){$short_pair = $BRC." to ".$pair[$BRCnum]."\n";}
+								if($BRC > $pair[$BRCnum]){$short_pair = $pair[$BRCnum]." to ".$BRC."\n";}
+								print Report " -- ".$short_pair;
+								push(@pins, $nodes[1]);
+								}
+							else		#collect pins data
+							{
+								push(@pins, $nodes[1]);
+								}
+							$BRCnum++;
+							}
+						}
+					}
+				}
+			}
+		}
+	NEXT_NODE:
+	}
+close Report;
+close Fixture;
+
+my @unique_pins = uniq @pins;
+@unique_pins = sort @unique_pins;
+#my $pins_ref = \@unique_pins;
+#$short_thres-> write_col(1, 0, $pins_ref, $format_data);
+
+foreach my $i (0..@unique_pins-1)
+{
+	#print $unique_pins[$i],"\n";
+	if (exists $test_nodes{$unique_pins[$i]})
+	{
+		$short_thres-> write($node, 0, $unique_pins[$i], $format_data);  ## Nodes ##
+		}
+	else
+	{
+		$short_thres-> write($node, 0, $unique_pins[$i], $format_STP);  ## Nodes ##
+		}
+	
+	$node++;
+	}
+print "\tfixture nodes: ".scalar@unique_pins."\n";
+$summary-> write("A10", "fixture nodes: ".scalar @unique_pins);
+
+if (scalar @unique_pins == $sizeNode)
+{
+	$short_thres-> write("A1", 'Fixture TP: '.scalar @unique_pins, $format_head);
+	}
+else
+{
+	$short_thres-> write("A1", 'Fixture TP: '.scalar @unique_pins, $format_anno1);
+	}
+
+#-----------------------------------------------------------------------------------------
+
+my $row_ver = 0;
 our @Paral = ("tested-res","tested-cap");
 our @TOtested = ("tested-res","tested-cap","tested-jmp","tested-dio","tested-zen","tested-ind","tested-fuse");
 our @TOtestedver = ("tested-res+ver","tested-cap+ver","tested-jmp+ver","tested-dio+ver","tested-zen+ver","tested-ind+ver","tested-fuse+ver");
@@ -766,6 +1093,7 @@ foreach my $device (@bom_list)
 	my $Toggle_Pin = 0;
 	my $NC_Pin = 0;
 	my $rowP_ori = $rowP;
+	my $ibus = ""; my $sbus = ""; my $state = "";
 	#-------------------------------------------------------------------------------------
 	my $worksheet = 0;
 	my $foundTO = 0;
@@ -788,7 +1116,7 @@ foreach my $device (@bom_list)
 	and grep{ $_ eq $testorder{$device}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			General AnaTest		", $device."\n";
+		print "			Common AnaTest		", $device."\n";
 		@array = ("-","-","-","-","-");
 		$array_ref = \@array;
 		$tested-> write_row($rowT, 2, $array_ref, $format_data);
@@ -810,11 +1138,15 @@ foreach my $device (@bom_list)
 			$len = 0;
 			chomp($lineTF);
 			$lineTF =~ s/^ +//;                               	#clear head of line spacing
-			#print $lineTF;
+			#print $lineTF,"\n";
+			next if (length($lineTF) < 2);
 			my @list = split('\ ', $lineTF, 2);
 			#print $list[0],"\n";
 			#print $list[1],"\n";
 			#print $value,"\n";
+
+			if ($list[0] eq "connect" and substr($list[1],0,1) eq "i" and $list[1] !~ " pins "){my @list1 = split('\"', $list[1], 3); $ibus = uc($list1[1]); }
+			if ($list[0] eq "connect" and substr($list[1],0,1) eq "s" and $list[1] !~ " pins "){my @list1 = split('\"', $list[1], 3); $sbus = uc($list1[1]); }
 
 			if (grep{ $_ eq $testorder{$device}} @Paral and $lineTF =~ "report parallel devices")
 			{
@@ -854,13 +1186,16 @@ foreach my $device (@bom_list)
 
 					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
 					}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
 				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
-				
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
+
 				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
 				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
 				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
+
+				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\d' and substr($value,-1,1) eq '0' ) {$value =  substr($value,0,-1); } else{last;}}
+				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\D' and substr($value,-2,1) eq '0' ) {$value =  substr($value,0,-2).substr($value,-1,1); } elsif(substr($value,-2,1) =~ '\.' and substr($value,-1,1) =~ '\D' ) {$value =  substr($value,0,-2).substr($value,-1,1); } else{last;}}
 				}
 			
 			if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)						## matching type ##
@@ -878,6 +1213,8 @@ foreach my $device (@bom_list)
 					});
 
 				@param =  split('\,', $list[1]);
+				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\d' and substr($param[0],-1,1) eq '0' ) {$param[0] =  substr($param[0],0,-1); } else{last;}}
+				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\D' and substr($param[0],-2,1) eq '0' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } elsif(substr($param[0],-2,1) =~ '\.' and substr($param[0],-1,1) =~ '\D' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } else{last;}}
 				$tested-> write($rowT, 3, $param[0], $format_data);  						## Nominal ## 
 				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  	## HiLimit ##
 				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  	## HiLimit ##
@@ -930,6 +1267,7 @@ foreach my $device (@bom_list)
 				}
 			elsif ($list[0] eq "jumper")													## matching type ##
 			{
+				$state = shorts_check($ibus, $sbus);
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
 				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
 				if($value eq '-'){$tested-> write($rowT, 2, $value, $format_data);}  		## BOMvalue ##
@@ -937,8 +1275,11 @@ foreach my $device (@bom_list)
 				else{$tested-> write($rowT, 2, $value, $format_VCC);}
 				@param =  split('\,', $list[1]);
 				$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-				if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}  ## Excel ##
-				if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
+
+				if ($OP == 0 and $state eq "True"){$tested-> write($rowT, 4, $param[0], $format_data); $tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}
+				if ($OP == 0 and $state eq "False"){$tested-> write($rowT, 4, $param[0], $format_STP); $tested-> write($rowT, 6, "pair bus not cover in 'Shorts'", $format_VCC);}
+				if ($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);}
+				if ($OP == 1){$tested-> write($rowT, 6, "OP test", $format_STP);}
 				$rowT++;
 				goto Next_Ori;
 				}
@@ -971,7 +1312,7 @@ foreach my $device (@bom_list)
 			and grep{ $_ eq $testorder{$versions[$v]."+".$device}} @TOtestedver)
 			{
 				$foundTO = 1;
-				print "			General AnaVTest	", $device." - [$versions[$v]]\n";
+				print "			Common AnaVTest		", $device." - [$versions[$v]]\n";
 				@array = ("-","-","-","-","-");
 				$array_ref = \@array;
 				$tested-> write_row($rowT, 2, $array_ref, $format_data);
@@ -988,10 +1329,13 @@ foreach my $device (@bom_list)
 					$len = 0;
 					chomp($lineTF);
 					$lineTF =~ s/^ +//;                               	#clear head of line spacing
-					#print $lineTF;
-					
+					#print $lineTF,"\n";
+					next if (length($lineTF) < 2);
 					my @list = split('\ ', $lineTF, 2);
-					
+
+					if ($list[0] eq "connect" and substr($list[1],0,1) eq "i" and $list[1] !~ " pins "){my @list1 = split('\"', $list[1], 3); $ibus = uc($list1[1]); }
+					if ($list[0] eq "connect" and substr($list[1],0,1) eq "s" and $list[1] !~ " pins "){my @list1 = split('\"', $list[1], 3); $sbus = uc($list1[1]); }
+
 					if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)							## matching type ##
 					{
 						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
@@ -1045,11 +1389,15 @@ foreach my $device (@bom_list)
 						}
 					elsif ($list[0] eq "jumper")														## matching type ##
 					{
+						$state = shorts_check($ibus, $sbus);
 						$tested-> write($rowT, 1, "[".$versions[$v]."] - ".$list[0], $format_data);  	## TestType ##
 						@param =  split('\,', $list[1]);
 						$OP = 0; if ($lineTF =~ "op") {$OP = 1;}
-						if($OP == 0){$tested-> write($rowT, 4, $param[0], $format_data);$tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}  ## Excel ##
-						if($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);$tested-> write($rowT, 6, "OP test", $format_STP);}	## Excel ##
+
+						if ($OP == 0 and $state eq "True"){$tested-> write($rowT, 4, $param[0], $format_data); $tested-> write($rowT, 6, substr($testplan{$device},6), $format_anno);}
+						if ($OP == 0 and $state eq "False"){$tested-> write($rowT, 4, $param[0], $format_STP); $tested-> write($rowT, 6, "pair bus not cover in 'Shorts'", $format_VCC);}
+						if ($OP == 1){$tested-> write($rowT, 5, $param[0], $format_data);}
+						if ($OP == 1){$tested-> write($rowT, 6, "OP test", $format_STP);}
 						$rowT++;
 						goto Next_Rev;
 						}
@@ -1076,7 +1424,7 @@ foreach my $device (@bom_list)
 			elsif(grep{ $_ eq $testorder{$versions[$v]."+".$device}} @TOuntestver)
 			{
 				$foundTO = 1;
-				print "			General NullTest	", $device." - [$versions[$v]]\n";
+				print "			Common NullTest		", $device." - [$versions[$v]]\n";
 				$tested-> write($rowT, 0, $device, $format_data);
 				$tested-> write($rowT, 1, "[".$versions[$v]."] - ", $format_STP);  							## TestType ##
 					@array = ("-","-","-","-");
@@ -1096,7 +1444,7 @@ foreach my $device (@bom_list)
 	and grep{ $_ eq $testorder{$device}} @TOtested)
 	{
 		$foundTO = 1;
-		print "			General SkipTest	", $device,"\n";
+		print "			Common SkipTest		", $device,"\n";
 		if ($UNCover == 0){$coverage-> write($rowC, 1, 'K', $format_VCC);}					#Coverage
 		$untest-> write($rowU, 0, $device, $format_data);
 		$untest-> write($rowU, 1, "been skipped in TestPlan.", $format_anno1);  			## Excel ##
@@ -1123,7 +1471,7 @@ foreach my $device (@bom_list)
 	and grep{ $_ eq $testorder{$device}} @TOuntest)
 	{
 		$foundTO = 1;
-		print "			General NullTest	", $device,"\n";
+		print "			Common NullTest		", $device,"\n";
 		$untest-> write($rowU, 0, $device, $format_data);
 		$untest-> write($rowU, 1, "been set NullTest in TestOrder.", $format_anno);
 		$UTline = "";
@@ -1160,7 +1508,7 @@ foreach my $device (@bom_list)
 	and grep{ $_ eq $testorder{$device}} @TOskipped)
 	{
 		$foundTO = 1;
-		print "			General Skipped		", $device,"\n";
+		print "			Common Skipped		", $device,"\n";
 		$untest-> write($rowU, 0, $device, $format_data);  ## Excel ##
 		$untest-> write($rowU, 1, "been Skipped in TestOrder.", $format_anno1);  			## Excel ##
 		$UTline = "";
@@ -1197,7 +1545,7 @@ foreach my $device (@bom_list)
 	and grep{ $_ eq $testorder{$device}} @TOparal)
 	{
 		$foundTO = 1;
-		print "			General ParalTest	", $device,"\n";
+		print "			Common ParalTest	", $device,"\n";
 		
 		if($UNCover == 0){$coverage-> write($rowC, 1, 'L', $format_data);}			#Coverage
 		$limited-> write($rowL, 0, $device, $format_data);		## Excel ##
@@ -1236,7 +1584,7 @@ foreach my $device (@bom_list)
 	)
 	{
 		$foundTO = 1;
-		print "			General PwrTest		", $device,"\n";
+		print "			Common PwrTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1342,7 +1690,7 @@ foreach my $device (@bom_list)
 		if (exists($testorder{$versions[$v]."+".$device}) and substr($testorder{$versions[$v]."+".$device},7,7) eq "pwr+ver")
 		{
 		$foundTO = 1;
-		print "			General PwrVTest	", $device." - [$versions[$v]]\n";
+		print "			Common PwrVTest		", $device." - [$versions[$v]]\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1447,7 +1795,7 @@ foreach my $device (@bom_list)
 	{			
 		$foundTO = 1;
 		$length_DigPin = 10;
-		print "			General DigiTest	", $device,"\n";
+		print "			Common DigiTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1666,7 +2014,7 @@ foreach my $device (@bom_list)
 		if (exists($testorder{$versions[$v]."+".$device}) and substr($testorder{$versions[$v]."+".$device},7,7) eq "dig+ver")
 		{
 		$foundTO = 1;
-		print "			General DigVTest	",$device," - [$versions[$v]]\n";
+		print "			Common DigVTest		",$device," - [$versions[$v]]\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1709,7 +2057,7 @@ foreach my $device (@bom_list)
 	)
 	{
 		$foundTO = 1;
-		print "			General MixTest		", $device,"\n";
+		print "			Common MixTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 3, $array_ref, $format_data);
@@ -1756,7 +2104,7 @@ foreach my $device (@bom_list)
 	{
 		$foundTO = 1;
 		$length_SNail = 10;
-		print "			General BscTest	", $device,"\n";
+		print "			Common BscTest		", $device,"\n";
 		@array = ("-","-","-","-","-","-","-","-","-");
 		$array_ref = \@array;
 		$power-> write_row($rowP, 4, $array_ref, $format_data);
@@ -2021,7 +2369,8 @@ foreach my $device (@bom_list)
 			$len = 0;
 			chomp($lineTF);
 			$lineTF =~ s/^ +//;                               	#clear head of line spacing
-			#print $lineTF;
+			#print $lineTF,"\n";
+			next if (length($lineTF) < 2);
 			my @list = split('\ ', $lineTF, 2);
 			#print $list[0],"\n";
 			#print $list[1],"\n";
@@ -2064,13 +2413,16 @@ foreach my $device (@bom_list)
 
 					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
 					}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
 				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
 				
 				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
 				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
 				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
+
+				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\d' and substr($value,-1,1) eq '0' ) {$value =  substr($value,0,-1); } else{last;}}
+				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\D' and substr($value,-2,1) eq '0' ) {$value =  substr($value,0,-2).substr($value,-1,1); } elsif(substr($value,-2,1) =~ '\.' and substr($value,-1,1) =~ '\D' ) {$value =  substr($value,0,-2).substr($value,-1,1); } else{last;}}
 				}
 
 			if ($list[0] =~ /^(resistor|capacitor|inductor|zener)$/)							## matching type ##
@@ -2088,6 +2440,8 @@ foreach my $device (@bom_list)
 					});
 
 				@param =  split('\,', $list[1]);	
+				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\d' and substr($param[0],-1,1) eq '0' ) {$param[0] =  substr($param[0],0,-1); } else{last;}}
+				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\D' and substr($param[0],-2,1) eq '0' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } elsif(substr($param[0],-2,1) =~ '\.' and substr($param[0],-1,1) =~ '\D' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } else{last;}}
 				$tested-> write($rowT, 3, $param[0], $format_data);  							## Nominal ## 
 				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  		## HiLimit ##
 				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  		## HiLimit ##
@@ -2198,8 +2552,8 @@ foreach my $device (@bom_list)
 					$len = 0;
 					chomp($lineTF);
 					$lineTF =~ s/^ +//;                               	#clear head of line spacing
-					#print $lineTF;
-					
+					#print $lineTF,"\n";
+					next if (length($lineTF) < 2);
 					my @list = split('\ ', $lineTF, 2);
 					#print $list[0],"\n";
 					#print $list[1],"\n";
@@ -3207,7 +3561,6 @@ foreach my $device (@bom_list)
 		}
 	}
 	################ reservation #########################################################
-
 	if((not exists ($testorder{$device}) or $testorder{$device} eq "") and $foundTO == 0)
 	{
 		#print $foundTO,"--5--","\n";
@@ -3219,12 +3572,14 @@ foreach my $device (@bom_list)
 		$rowU++;
 		goto Next_Dev;
 		}
+
     ######################################################################################
 	#print $testorder{$device},"\n";
 	Next_Dev:
 	#print $device.$rowP."	".$rowP_ori."\n";
 	if ($rowP - $rowP_ori > 1){$power-> merge_range($rowP_ori, 0, $rowP-1, 0, $device, $format_hylk);}
 	}
+
 
 ############################### read Board value #########################################
 sub read_value{
@@ -3250,110 +3605,25 @@ sub read_value{
 	close Boards;
 	}
 
-sub read_multi_value{
-	my $dev = shift;
-	#print $dev,"\n";
-	
-	open (Boards, "< board");
-	while(my $array = <Boards>)								
+
+############################### check if jumper tested in shorts #########################
+sub shorts_check{
+	my ($ibus, $sbus) = @_;	
+
+	if (grep{ $_ eq $ibus."\/".$sbus or $_ eq $sbus."\/".$ibus} @shorts)
 	{
-		chomp ($array);
-		last if ($array =~ "CONNECTIONS");
-		$array =~ s/(^\s+|\s+$)//g;
-		my @list = split('\ ', $array);
-		next if (scalar @list < 5);
-		if($list[0] eq $dev)
-		{
-			my @list = split('\"', $array);
-			my @multi_list = split('\ ', $list[3]);
-			return $multi_list[1];
-			last;
-			}
+		#print "$ibus + $sbus existed\n";
+		return "True";
 		}
-	close Boards;
-	}
-
-############################### shorts threshold statistic ###############################
-
-print  "\n  >>> Analyzing shorts threshold ...\n";
-
-my $delay;
-my $thres;
-my $node = 1;
-@test_nodes = ();
-my @skip_nodes = ();
-
-open (Thres, "< shorts") or open (Thres, "< 1%shorts") or warn "\t!!! Failed to open 'shorts' file: $!.\n";
-	while($nodes = <Thres>)
+	else
 	{
-		chomp $nodes;
-		$nodes =~ s/^ +//;	   #clear head of line spacing
-		if (substr($nodes,0,9) =~ "threshold")
-		{
-			$thres = substr($nodes, index($nodes,"threshold")+10);
-			if ($nodes =~ "\!"){$thres = substr($nodes, 10, index($nodes,"\!")-10);}
-			$thres =~ s/(^\s+|\s+$)//g;                     #clear all spacing
-			}
-		if ($nodes =~ "delay") 
-		{
-			$nodes =~ s/( +)/ /g;
-			#print $nodes,"\n";
-			if($nodes =~ "\!"){$delay = substr($nodes, 15, index($nodes,"\!")-15);}
-			else{$delay = substr($nodes, 15);}
-			#print $delay,"\n";
-			#if ($nodes =~ "\!"){$delay = substr($nodes, 10, index($nodes,"\!")-10);}
-			$delay =~ s/(^\s+|\s+$)//g;                     #clear all spacing
-			}
-		if ($nodes =~ "nodes")
-		{
-			if(substr($nodes,0,1) eq "!"){
-			$nodes =~ s/(^\s+|\s+$)//g;                     #clear all spacing
-			my $node_name = substr($nodes, 0, rindex($nodes,"!"));
-			$node_name =~ s/(^\s+|\s+$)//g;                     #clear all spacing
-			#$short_thres-> write($node, 0, $node_name, $format_data);  ## Nodes ##
-			#$short_thres-> write($node, 1, substr($nodes, rindex($nodes,"!")), $format_data);  ## Thres ##
-			#$short_thres-> write($node, 2, "-", $format_data);  ## Delay ##
-			push (@skip_nodes, $node_name."/".substr($nodes, rindex($nodes,"!"))."/"."-")
-				}
-			elsif(substr($nodes,0,5) eq "nodes"){
-			#$short_thres-> write($node, 0, $nodes, $format_data);  ## Nodes ##
-			#$short_thres-> write($node, 1, $thres, $format_data);  ## Thres ##
-			#$short_thres-> write($node, 2, $delay, $format_data);  ## Delay ##
-			push (@test_nodes, $nodes."/".$thres."/".$delay)
-				}
-			#$node++;
-			#print $nodes."\n";
-			}
+		#print "$ibus + $sbus inexisted\n";
+		return "False";
 		}
-close Thres;
-
-# print sort @test_nodes,"\n";
-# print sort @skip_nodes,"\n";
-
-foreach my $i (0..@test_nodes-1)
-{
-# 	print $test_nodes[$i];
-	@test_item = split("\/", $test_nodes[$i]);
-	$short_thres-> write($node, 0, $test_item[0], $format_data);  ## Nodes ##
-	$short_thres-> write($node, 1, $test_item[1], $format_data);  ## Thres ##
-	$short_thres-> write($node, 2, $test_item[2], $format_data);  ## Delay ##
-	$node++;
-	}
-	
-foreach my $i (0..@skip_nodes-1)
-{
-# 	print $skip_nodes[$i];
-	@test_item = split("\/", $skip_nodes[$i]);
-	$short_thres-> write($node, 0, $test_item[0], $format_anno);  ## Nodes ##
-	$short_thres-> write($node, 1, $test_item[1], $format_anno);  ## Thres ##
-	$short_thres-> write($node, 2, $test_item[2], $format_data);  ## Delay ##
-	$node++;
 	}
 
-$short_thres-> write(0, 3, "tested nodes: ".scalar@test_nodes, $format_anno);
 
 ##########################################################################################
-
 
 $bom_coverage_report->close();
 
