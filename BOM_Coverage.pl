@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.98>\n";
+print "  Bom Coverage ckecking tool for 3070 <v7.99>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -1157,6 +1157,7 @@ foreach my $device (@bom_list)
 					$lineTF =~ s/( +)/ /g;
 					last if ($lineTF =~ "end on failure");
 					#print $lineTF,"\n";
+					next if (length($lineTF) < 2);
 					my @Vlist = split('\ ', $lineTF);
 					#print substr($Vlist[2],-2,1),substr($value,-1,1),"\n";
 
@@ -2384,6 +2385,7 @@ foreach my $device (@bom_list)
 					$lineTF =~ s/( +)/ /g;
 					last if ($lineTF =~ "end on failure");
 					#print $lineTF,"\n";
+					next if (length($lineTF) < 2);
 					my @Vlist = split('\ ', $lineTF);
 					#print substr($Vlist[2],-2,1),substr($value,-1,1),"\n";
 
