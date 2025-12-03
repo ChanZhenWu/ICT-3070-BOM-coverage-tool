@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "\n";
 print "*******************************************************************************\n";
-print "  Bom Coverage ckecking tool for 3070 <v7.99>\n";
+print "  Bom Coverage ckecking tool for 3070 <v8.0>\n";
 print "  Author: Noon Chen\n";
 print "  A Professional Tool for Test.\n";
 print "  ",scalar localtime;
@@ -1187,13 +1187,13 @@ foreach my $device (@bom_list)
 
 					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
 					}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
 
-				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
-				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
-				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
+				if($value !~ "-" and substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
+				if($value !~ "-" and substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
+				if($value !~ "-" and substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
 
 				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\d' and substr($value,-1,1) eq '0' ) {$value =  substr($value,0,-1); } else{last;}}
 				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\D' and substr($value,-2,1) eq '0' ) {$value =  substr($value,0,-2).substr($value,-1,1); } elsif(substr($value,-2,1) =~ '\.' and substr($value,-1,1) =~ '\D' ) {$value =  substr($value,0,-2).substr($value,-1,1); } else{last;}}
@@ -1204,20 +1204,26 @@ foreach my $device (@bom_list)
 				$tested-> write($rowT, 0, $device, $format_item);  							## TestName ##
 				$tested-> write($rowT, 1, $list[0], $format_data);  						## TestType ##
 				$tested-> write($rowT, 2, $value, $format_data);  							## BOMvalue ##
-
-				$tested->conditional_formatting($rowT, 3,
-				{
-					type     => 'cell',
-					criteria => 'not equal to',
-					value    => $value,
-					format   => $format_VCC,
-					});
+				# $tested->conditional_formatting($rowT, 3,
+				# {
+				# 	type     => 'cell',
+				# 	criteria => 'not equal to',
+				# 	value    => $value,
+				# 	format   => $format_VCC,
+				# 	});
 
 				@param =  split('\,', $list[1]);
 				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\d' and substr($param[0],-1,1) eq '0' ) {$param[0] =  substr($param[0],0,-1); } else{last;}}
 				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\D' and substr($param[0],-2,1) eq '0' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } elsif(substr($param[0],-2,1) =~ '\.' and substr($param[0],-1,1) =~ '\D' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } else{last;}}
-				$tested-> write($rowT, 3, $param[0], $format_data);  						## Nominal ## 
-				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  	## HiLimit ##
+				my $vboard = extract_number($value);
+				my $vnominal = extract_number($param[0]);
+				if ($vboard =~ "-"){$tested-> write($rowT, 3, $param[0], $format_VCC);}		## Nominal ##
+				else{
+				my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				if ($percent_diff <= 1){$tested-> write($rowT, 3, $param[0], $format_data);}## Nominal ##
+				if ($percent_diff > 1){$tested-> write($rowT, 3, $param[0], $format_VCC);}	## Nominal ##
+				}
+				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}	## HiLimit ##
 				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  	## HiLimit ##
 				if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  	## LoLimit ##
 				if($param[2] > 40){$tested-> write($rowT, 5, $param[2], $format_STP);}		## LoLimit ##
@@ -2415,13 +2421,13 @@ foreach my $device (@bom_list)
 
 					if(substr($value,-1,1) eq "M" and substr($Vlist[2],-2,1) eq "M") {$value = (substr($value,0,-1) * substr($Vlist[2],0,-2))/(substr($value,0,-1) + substr($Vlist[2],0,-2))."M";}
 					}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
-				if(substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "p"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."n";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "n"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."u";}
+				if($value !~ "-" and substr($value,0,-1) >= 1000 and substr($value,-1,1) eq "u"){$value = sprintf("%.3f",(substr($value,0,-1)/1000))."m";}
 				
-				if(substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
-				if(substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
-				if(substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
+				if($value !~ "-" and substr($value,-1,1) =~ '\d' and $value < 1000){$value = sprintf("%.3f",$value);}			#ok
+				if($value !~ "-" and substr($value,-1,1) eq "k" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."k";}	#ok
+				if($value !~ "-" and substr($value,-1,1) eq "M" and $value =~ /\./){$value = sprintf("%.3f",substr($value,0,-1)); $value =~ s/\.?0+$//; $value = $value."M";}	#ok
 
 				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\d' and substr($value,-1,1) eq '0' ) {$value =  substr($value,0,-1); } else{last;}}
 				while($value){if($value =~ '\.' and substr($value,-1,1) =~ '\D' and substr($value,-2,1) eq '0' ) {$value =  substr($value,0,-2).substr($value,-1,1); } elsif(substr($value,-2,1) =~ '\.' and substr($value,-1,1) =~ '\D' ) {$value =  substr($value,0,-2).substr($value,-1,1); } else{last;}}
@@ -2432,19 +2438,25 @@ foreach my $device (@bom_list)
 				$tested-> write($rowT, 0, $Mult_file, $format_item);  							## TestName ##
 				$tested-> write($rowT, 1, $list[0], $format_data);  							## TestType ##
 				$tested-> write($rowT, 2, $value, $format_data);  								## BOMvalue ##
-
-				$tested->conditional_formatting($rowT, 3,
-				{
-					type     => 'cell',
-					criteria => 'not equal to',
-					value    => $value,
-					format   => $format_VCC,
-					});
+				#$tested->conditional_formatting($rowT, 3,
+				#{
+				#	type     => 'cell',
+				#	criteria => 'not equal to',
+				#	value    => $value,
+				#	format   => $format_VCC,
+				#	});
 
 				@param =  split('\,', $list[1]);	
 				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\d' and substr($param[0],-1,1) eq '0' ) {$param[0] =  substr($param[0],0,-1); } else{last;}}
 				while($param[0]){if($param[0] =~ '\.' and substr($param[0],-1,1) =~ '\D' and substr($param[0],-2,1) eq '0' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } elsif(substr($param[0],-2,1) =~ '\.' and substr($param[0],-1,1) =~ '\D' ) {$param[0] =  substr($param[0],0,-2).substr($param[0],-1,1); } else{last;}}
-				$tested-> write($rowT, 3, $param[0], $format_data);  							## Nominal ## 
+				my $vboard = extract_number($value);
+				my $vnominal = extract_number($param[0]);
+				if ($vboard =~ "-"){$tested-> write($rowT, 3, $param[0], $format_VCC);}			## Nominal ##
+				else{
+				my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				if ($percent_diff <= 1){$tested-> write($rowT, 3, $param[0], $format_data);}	## Nominal ##
+				if ($percent_diff > 1){$tested-> write($rowT, 3, $param[0], $format_VCC);}		## Nominal ##
+				}
 				if($param[1] <= 40){$tested-> write($rowT, 4, $param[1], $format_data);}  		## HiLimit ##
 				if($param[1] > 40){$tested-> write($rowT, 4, $param[1], $format_STP);}  		## HiLimit ##
 				if($param[2] <= 40){$tested-> write($rowT, 5, $param[2], $format_data);}  		## LoLimit ##
@@ -3624,6 +3636,18 @@ sub shorts_check{
 		}
 	}
 
+
+############################### extract number of value ##################################
+# 提取字符串中的数值部分
+sub extract_number {
+    my ($str) = @_;
+    
+    # 匹配各种可能的数值格式（包括小数、科学计数法等）
+    if ($str =~ /([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/) {
+        return $1;
+    }
+    return $str;
+}
 
 ##########################################################################################
 
