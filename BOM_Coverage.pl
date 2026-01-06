@@ -903,6 +903,7 @@ if ($! ne "No such file or directory")
 		if ($nodes =~ "nodes")
 		{
 			my @node = split('\"', $nodes);
+			if (substr($node[1],0,2) =~ '#%'){$node[1] = substr($node[1],2); }
 			if(substr($nodes,0,1) eq "!")
 			{
 				my $node_name = $node[1];
