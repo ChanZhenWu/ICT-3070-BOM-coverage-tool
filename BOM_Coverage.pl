@@ -1220,7 +1220,10 @@ foreach my $device (@bom_list)
 				my $vnominal = extract_number($param[0]);
 				if ($vboard =~ "-"){$tested-> write($rowT, 3, $param[0], $format_VCC);}		## Nominal ##
 				else{
-				my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				# my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				my $percent_diff;
+				if ($vboard == 0) {$percent_diff = ($vnominal == 0) ? 0 : 100;} 
+				else {$percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;}
 				if ($percent_diff <= 1){$tested-> write($rowT, 3, $param[0], $format_data);}## Nominal ##
 				if ($percent_diff > 1){$tested-> write($rowT, 3, $param[0], $format_VCC);}	## Nominal ##
 				}
@@ -1878,7 +1881,7 @@ foreach my $device (@bom_list)
 								if ($DigPin[1] =~ /(GND|GROUND)/)
 								{
 									if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_GND); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-									if ($DigPin[0] =~ /^\D/i)
+									if ($DigPin[0] =~ /^\D.*\d$/i)
 									{
 										$IC-> write($DigPin[0], $DigPin[1], $format_GND);
 										($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1893,7 +1896,7 @@ foreach my $device (@bom_list)
 								elsif ($DigPin[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 								{
 									if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_VCC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-									if ($DigPin[0] =~ /^\D/i)
+									if ($DigPin[0] =~ /^\D.*\d$/i)
 									{
 										$IC-> write($DigPin[0], $DigPin[1], $format_VCC);
 										($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1907,7 +1910,7 @@ foreach my $device (@bom_list)
 								elsif ($DigPin[1] =~ /(^NC_|_NC$|NONE)/)
 								{
 									if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_NC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-									if ($DigPin[0] =~ /^\D/i)
+									if ($DigPin[0] =~ /^\D.*\d$/i)
 									{
 										$IC-> write($DigPin[0], $DigPin[1], $format_NC);
 										($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1926,7 +1929,7 @@ foreach my $device (@bom_list)
 										{
 											#print uc($device)."\.".$DigPin[0],"\n";
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Toggle_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-											if ($DigPin[0] =~ /^\D/i)
+											if ($DigPin[0] =~ /^\D.*\d$/i)
 											{
 												$IC-> write($DigPin[0], $DigPin[1]."\n* Toggle_Test", $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1940,7 +1943,7 @@ foreach my $device (@bom_list)
 										if(exists($hash_pin{$DigPin[1]}))
 										{
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Contact_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-											if ($DigPin[0] =~ /^\D/i)
+											if ($DigPin[0] =~ /^\D.*\d$/i)
 											{
 												$IC-> write($DigPin[0], $DigPin[1]."\n* Contact_Test", $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
@@ -1952,7 +1955,7 @@ foreach my $device (@bom_list)
 											}
 										else{
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1],$format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-											if ($DigPin[0] =~ /^\D/i)
+											if ($DigPin[0] =~ /^\D.*\d$/i)
 											{
 												$IC-> write($DigPin[0], $DigPin[1], $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
@@ -2454,7 +2457,10 @@ foreach my $device (@bom_list)
 				my $vnominal = extract_number($param[0]);
 				if ($vboard =~ "-"){$tested-> write($rowT, 3, $param[0], $format_VCC);}			## Nominal ##
 				else{
-				my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				# my $percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;
+				my $percent_diff;
+				if ($vboard == 0) {$percent_diff = ($vnominal == 0) ? 0 : 100;} 
+				else {$percent_diff = abs(($vnominal - $vboard) / $vboard) * 100;}
 				if ($percent_diff <= 1){$tested-> write($rowT, 3, $param[0], $format_data);}	## Nominal ##
 				if ($percent_diff > 1){$tested-> write($rowT, 3, $param[0], $format_VCC);}		## Nominal ##
 				}
@@ -3014,7 +3020,7 @@ foreach my $device (@bom_list)
 									if ($DigPin[1] =~ /(GND|GROUND)/)
 									{
 										if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_GND); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-										if ($DigPin[0] =~ /^\D/i)
+										if ($DigPin[0] =~ /^\D.*\d$/i)
 										{
 											$IC-> write($DigPin[0], $DigPin[1], $format_GND);
 											($pos) = $DigPin[0] =~ /^\D+/g;
@@ -3028,7 +3034,7 @@ foreach my $device (@bom_list)
 									elsif ($DigPin[1] =~ /^(\+0|0V|\+1|1V|\+2|2V|\+3|3V|\+5|5V|V_|VCC|VDD|PP|P0V|P1V|P2V|P3V|P5V)/)
 									{
 										if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_VCC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-										if ($DigPin[0] =~ /^\D/i)
+										if ($DigPin[0] =~ /^\D.*\d$/i)
 										{
 											$IC-> write($DigPin[0], $DigPin[1], $format_VCC);
 											($pos) = $DigPin[0] =~ /^\D+/g;
@@ -3042,7 +3048,7 @@ foreach my $device (@bom_list)
 									elsif ($DigPin[1] =~ /(^NC_|_NC$|NONE)/)
 									{
 										if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1], $format_NC); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-										if ($DigPin[0] =~ /^\D/i)
+										if ($DigPin[0] =~ /^\D.*\d$/i)
 										{
 											$IC-> write($DigPin[0], $DigPin[1], $format_NC);
 											($pos) = $DigPin[0] =~ /^\D+/g;
@@ -3061,7 +3067,7 @@ foreach my $device (@bom_list)
 											{
 												#print uc($device)."\.".$DigPin[0],"\n";
 												if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Toggle_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-												if ($DigPin[0] =~ /^\D/i)
+												if ($DigPin[0] =~ /^\D.*\d$/i)
 												{
 													$IC-> write($DigPin[0], $DigPin[1]."\n* Toggle_Test", $format_data);
 													($pos) = $DigPin[0] =~ /^\D+/g;
@@ -3075,7 +3081,7 @@ foreach my $device (@bom_list)
 											if(exists($hash_pin{$DigPin[1]}))
 											{
 												if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1]."\n* Contact_Test", $format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-												if ($DigPin[0] =~ /^\D/i)
+												if ($DigPin[0] =~ /^\D.*\d$/i)
 												{
 													$IC-> write($DigPin[0], $DigPin[1]."\n* Contact_Test", $format_data);
 													($pos) = $DigPin[0] =~ /^\D+/g;
@@ -3087,7 +3093,7 @@ foreach my $device (@bom_list)
 												}
 											else{
 											if ($DigPin[0] =~ /^\d/){$IC-> write(int($DigPin[0])-1, 0, $DigPin[1],$format_data); if (length($DigPin[1])> $length_DigPin){$length_DigPin = length($DigPin[1]);} $IC-> set_column(0, 0, $length_DigPin+2);}
-											if ($DigPin[0] =~ /^\D/i)
+											if ($DigPin[0] =~ /^\D.*\d$/i)
 											{
 												$IC-> write($DigPin[0], $DigPin[1], $format_data);
 												($pos) = $DigPin[0] =~ /^\D+/g;
